@@ -210,4 +210,53 @@ When you run `fastapi dev main.py`, the system initializes in this order:
 4. `main.py` binds the routers.
 The system then sits idle, waiting for a POST request to hit `/signals/ingest`. When it does, the pipeline roars to life. 
 
+---
+
+## 6. Integration Guide for Flutter Developers (`ciro-mobile`)
+
+If you are a mobile developer building the **CIRO Mobile App (Flutter)**, this backend provides three primary ways to interface with the AI intelligence and real-time state.
+
+### A. Fetching Initial State & History (REST APIs)
+The easiest way to perform CRUD operations or fetch historical data is via the standard FastAPI REST endpoints.
+* **Base URL:** `http://localhost:8000` (or your deployed URL)
+* **Fetch Active Incidents:** `GET /incidents/active`
+  * *Returns:* A JSON list of `Incident` objects (maps to Dart `Incident` class). Use this when the app first launches to populate the map or feed.
+* **Fetch Agent Traces:** `GET /incidents/{incident_id}/traces`
+  * *Returns:* A JSON list of `AgentTrace` logs. Use this to build a "timeline" UI that shows the user exactly what the AI was thinking at each step.
+* **Submit Field Reports:** `POST /signals/ingest`
+  * *Usage:* When a user on the ground submits a photo or text report. Send a JSON body matching the `RawSignal` Pydantic model. This automatically kicks off the LangGraph pipeline.
+
+### B. Real-Time Updates (WebSockets)
+For a crisis app, polling HTTP endpoints is too slow. Use the WebSocket interface for sub-second updates.
+* **Endpoint:** `ws://localhost:8000/ws/incident`
+* **Implementation in Flutter:** Use a package like `web_socket_channel`.
+  ```dart
+  final channel = WebSocketChannel.connect(Uri.parse('ws://localhost:8000/ws/incident'));
+  channel.stream.listen((message) {
+      final data = jsonDecode(message);
+      if (data['type'] == 'incident_update') {
+          // Update your Riverpod/Provider state here!
+      }
+  });
+  ```
+* **Behavior:** Every time the LangGraph orchestrator finishes processing a new signal, it instantly broadcasts the mutated `Incident` object over this socket.
+
+### C. Direct Firebase Sync (The "Serverless" Approach)
+Since the `firestore_service.py` mirrors all finalized states to Google Cloud Firestore, you can optionally bypass the FastAPI GET/WebSocket endpoints entirely for reading data.
+* **Implementation in Flutter:** Use the `cloud_firestore` package.
+  ```dart
+  FirebaseFirestore.instance
+      .collection('incidents')
+      .where('status', isEqualTo: 'active')
+      .snapshots()
+      .listen((snapshot) {
+          // Flutter automatically rebuilds your UI whenever the backend AI updates the database!
+      });
+  ```
+* **Best Practice:** Use Firestore streams for reading data (it handles offline caching and real-time sync beautifully). Use the FastAPI `POST /signals/ingest` endpoint for writing data so it securely passes through the LangGraph AI validators before hitting the database.
+
+### D. Data Modeling (Python ↔ Dart)
+To prevent serialization errors, ensure your Dart models directly mirror the Pydantic models found in `backend/models/`. 
+* **Tip:** Look specifically at `backend/models/incident.py`. The `CrisisClassification` class has fields like `crisis_type`, `severity`, and `confidence`. Your Dart `fromJson` factories must account for these exact snake_case strings.
+
 Welcome to the team!
