@@ -29,16 +29,20 @@ backend/
 ├── firebase-credentials.json   # Google Cloud / Firebase service account key.
 ├── test_*.py                   # Various test scripts (test_pipeline.py, test_day3.py, etc.)
 │
-├── agents/                     # The core intelligence. The AI "Assembly Line".
-│   ├── base.py                 # The parent class ensuring every agent logs its decisions.
-│   ├── orchestrator.py         # The manager that passes data between the agents.
-│   ├── signal_fusion.py        # Groups reports by physical location.
-│   ├── credibility.py          # Detects contradictions in the reports.
-│   ├── classification.py       # Uses an LLM to categorize the crisis type & severity.
-│   ├── resource_allocation.py  # Prioritizes crises and dispatches ambulances/police.
-│   ├── simulation.py           # Calculates projected response times.
-│   ├── stakeholder_messaging.py# Drafts public alerts and media briefs.
-│   └── recovery.py             # Detects false alarms and issues retractions.
+├── agents/                     # The old core intelligence. The AI "Assembly Line". (Deprecated)
+│
+├── graph/                      # The LangGraph Orchestration Layer (The new Brains).
+│   ├── orchestrator.py         # The compiled StateGraph and execution engine.
+│   ├── state.py                # TypedDict defining the IncidentState schema.
+│   ├── edges.py                # Conditional routing logic between nodes.
+│   └── nodes/                  # Single-responsibility AI nodes.
+│       ├── fusion.py           # Groups reports by physical location.
+│       ├── credibility.py      # Detects contradictions in the reports.
+│       ├── classification.py   # Uses an LLM to categorize the crisis type & severity.
+│       ├── allocation.py       # Prioritizes crises and dispatches ambulances/police.
+│       ├── simulation.py       # Calculates projected response times.
+│       ├── messaging.py        # Drafts public alerts and media briefs.
+│       └── recovery.py         # Detects false alarms and issues retractions.
 │
 ├── api/                        # FastAPI endpoints (The doors into the system).
 │   ├── demo.py                 # Endpoints to trigger scripted hackathon demos.
@@ -71,23 +75,24 @@ backend/
 
 ## 3. System Architecture & Data Flow
 
-CIRO utilizes a **Sequential Agentic Pipeline Architecture**. 
+CIRO utilizes a **LangGraph-driven State Machine Architecture**. 
 
-Think of it like a factory conveyor belt. Raw materials (data) enter at the start, and at each station, a specialized worker (an agent) inspects the item, adds value to it, and passes it to the next worker. 
+Instead of a rigid linear pipeline where agents directly call each other, CIRO uses a centralized `IncidentState`. Nodes (stateless functions) read from this state, perform specialized tasks, and return state updates. The graph's edges conditionally route the state to the next node or halt execution based on the results.
 
 ### The Data Flow Lifecycle
 1. **Ingestion:** An external system sends a JSON payload to `POST /signals/ingest`.
-2. **Normalization:** The `signal_normalizer.py` cleans the text, extracts keywords, and formats it into a standardized `NormalizedSignal`.
-3. **Orchestration Kickoff:** The `api/signals.py` endpoint adds the signal to a background task, calling `Orchestrator.process_signal()`.
-4. **Agent 1 (Signal Fusion):** Checks the GPS coordinates. If the signal is within 1.5km of an active crisis, it attaches it to that crisis. Otherwise, it creates a new "Incident Context".
-5. **Agent 2 (Recovery):** Checks if this new signal is actually a highly credible field report saying "false alarm!". If so, it retracts the crisis and stops the pipeline.
-6. **Agent 3 (Credibility):** Looks at all the signals in the cluster. Are they contradicting each other? (e.g., One says "Flood", another says "Fire"). If yes, it lowers the confidence score.
-7. **Agent 4 (Classification):** Hands the data to Google Gemini to officially classify the severity (1-5) and exact crisis type.
-8. **Agent 5 (Resource Allocation):** Looks at the global pool of ambulances and police cars, prioritizes this crisis against all others, and dispatches units.
-9. **Agent 6 (Simulation):** Calculates how much these dispatched units will help the situation.
-10. **Agent 7 (Messaging):** Hands the finalized data back to Gemini to draft targeted text alerts.
-11. **Persistence:** The `Orchestrator` saves the final `Incident` and all the `AgentTrace` logs (the audit trail of every agent's thought process) to Firebase.
-12. **Broadcast:** The `Orchestrator` pushes the updated data through WebSockets so the frontend UI updates instantly without refreshing.
+2. **Normalization:** The `signal_normalizer.py` cleans the text and formats it into a standardized `NormalizedSignal`.
+3. **Graph Invocation:** The signal is injected into the initial `IncidentState`, and the LangGraph `orchestrator_graph.ainvoke()` is called.
+4. **Node 1 (Signal Fusion):** Checks the GPS coordinates. If the signal is within 1.5km of an active crisis, it attaches it to that crisis. Otherwise, it creates a new "Incident Context".
+5. **Node 2 (Credibility):** Looks at all the signals in the cluster. Are they contradicting each other? Returns a `CredibilityReport` to the state.
+6. **Node 3 (Recovery):** Checks if the signal is a highly credible field report saying "false alarm!". If so, it issues a `RETRACT` action.
+7. **Conditional Edge:** If retracted, the graph routes to `END`. Otherwise, it routes to `Classification`.
+8. **Node 4 (Classification):** Hands the data to Google Gemini to officially classify the severity (1-5) and exact crisis type.
+9. **Conditional Edge:** If confidence is too low, the graph could route to a human-review node. Otherwise, it routes to `Allocation`.
+10. **Node 5 (Allocation):** Looks at the global pool of emergency units, prioritizes this crisis, and dispatches units.
+11. **Node 6 (Simulation):** Calculates how much these dispatched units will help the situation.
+12. **Node 7 (Messaging):** Hands the finalized data back to Gemini to draft targeted text alerts.
+13. **Completion:** The graph reaches the `END` node, yielding the final processed state.
 
 ---
 
@@ -115,44 +120,30 @@ Think of it like a factory conveyor belt. Raw materials (data) enter at the star
 
 ---
 
-### 📂 The `agents/` Directory (The Brains)
+### 📂 The `graph/` Directory (The LangGraph Engine)
 
-#### `base.py`
-* **Purpose:** The foundational blueprint for every AI agent.
-* **Key Classes:** `BaseAgent`. It provides the `run()` wrapper method.
-* **Flow:** Every time an agent's `run()` method is called, the BaseAgent starts a timer, executes the specific agent logic, stops the timer, formats the input/output, and pushes an `AgentTrace` to Firebase.
+#### `state.py`
+* **Purpose:** The single source of truth for the entire pipeline.
+* **Key Components:** `IncidentState` (a `TypedDict`). It defines all fields (like `context`, `classification`, `errors`). It uses `Annotated` reducers (like `operator.add`) to safely append logs and errors without overwriting previous data.
 
 #### `orchestrator.py`
-* **Purpose:** The traffic cop. It manages the execution sequence of all agents.
-* **Key Functions:** `process_signal(signal)`. It takes a signal, fetches active incidents from the database, and awaits the response of each agent sequentially, piping the output of one agent into the input of the next.
+* **Purpose:** The traffic cop and state machine compiler.
+* **Key Components:** Uses `StateGraph` from LangGraph. It registers all nodes, defines the standard edges (Node A -> Node B), and sets up conditional edges (like `route_after_recovery`). It exposes the compiled `orchestrator_graph`.
 
-#### `signal_fusion.py`
-* **Purpose:** Geospatial clustering.
-* **Key Functions:** `execute()`. Input: a signal and active incidents. Uses distance math to return an `IncidentContext`.
+#### `edges.py`
+* **Purpose:** Routing logic.
+* **Key Functions:** Functions like `route_after_recovery` read the current state and return a string (e.g., `"END"` or `"CONTINUE"`) telling LangGraph where to route next.
 
-#### `credibility.py`
-* **Purpose:** Contradiction detection.
-* **Key Functions:** `execute()`. Input: `IncidentContext`. Iterates through signals and returns a `CredibilityReport` flagging if multiple crisis types are reported simultaneously.
-
-#### `classification.py`
-* **Purpose:** Identifies the crisis using Gemini 1.5 Flash.
-* **Key Functions:** `execute()`. Takes the context and credibility report, prompts the LLM to output JSON. Includes a `_rule_based_fallback` method if the API fails. Returns a `CrisisClassification`.
-
-#### `resource_allocation.py`
-* **Purpose:** Dispatches emergency units.
-* **Key Functions:** `execute()`. Sorts all crises by a weighted formula (`severity * 0.35 + confidence * 0.20 + population * 0.25`). Deducts required resources from the global state. Returns an `AllocationResult`.
-
-#### `simulation.py`
-* **Purpose:** Estimates impact.
-* **Key Functions:** `execute()`. Applies hardcoded templates based on dispatched resources to return a `SimulationResult` (e.g., estimating response time improvements).
-
-#### `stakeholder_messaging.py`
-* **Purpose:** Drafts PR and public alerts.
-* **Key Functions:** `execute()`. Prompts Gemini to write a public alert, a hospital alert, and a media brief. Returns a dictionary of strings.
-
-#### `recovery.py`
-* **Purpose:** Protects the system from false alarms.
-* **Key Functions:** `execute()`. Checks if a new highly-credible signal contradicts the crisis. Returns an action: `CONFIRM`, `RETRACT`, or `ESCALATE`.
+#### 📂 `nodes/` (The Single-Responsibility Agents)
+* **Purpose:** Stateless functions that receive the `IncidentState`, perform specialized AI or rule-based logic, and return a dictionary of state updates.
+* **Key Files:** 
+  * `fusion.py`: Geospatial clustering.
+  * `credibility.py`: Contradiction detection.
+  * `recovery.py`: Protects the system from false alarms.
+  * `classification.py`: Identifies the crisis using Gemini 1.5 Flash. Includes graceful fallback if the LLM fails.
+  * `allocation.py`: Dispatches emergency units.
+  * `simulation.py`: Estimates impact.
+  * `messaging.py`: Drafts PR and public alerts.
 
 ---
 
