@@ -5,7 +5,14 @@ allprojects {
     }
 }
 
- subprojects {
+rootProject.layout.buildDirectory.value(rootProject.layout.projectDirectory.dir("../build"))
+
+subprojects {
+    val newSubprojectBuildDir = rootProject.layout.buildDirectory.map { it.dir(project.name) }
+    project.layout.buildDirectory.value(newSubprojectBuildDir)
+}
+
+subprojects {
     project.evaluationDependsOn(":app")
 }
 

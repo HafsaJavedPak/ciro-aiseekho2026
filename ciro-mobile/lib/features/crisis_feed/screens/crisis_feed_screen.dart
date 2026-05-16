@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import '../../../core/providers/mock_data_provider.dart';
+import '../../../core/providers/incident_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../data/models/incident.dart';
+import 'incident_detail_screen.dart';
 
 class CrisisFeedScreen extends ConsumerWidget {
   const CrisisFeedScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final crises = ref.watch(mockCrisisProvider);
+    final incidents = ref.watch(incidentProvider);
 
     return Scaffold(
       body: CustomScrollView(
@@ -42,7 +44,7 @@ class CrisisFeedScreen extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Text(
+                      const Text(
                         'CITY MONITORING ACTIVE',
                         style: TextStyle(
                           color: Colors.green,
@@ -60,15 +62,25 @@ class CrisisFeedScreen extends ConsumerWidget {
           ),
           SliverPadding(
             padding: const EdgeInsets.all(16),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate((context, index) {
-                final crisis = crises[index];
-                return ExpandableCrisisCard(crisis: crisis)
-                    .animate()
-                    .fadeIn(duration: 500.ms, delay: (index * 100).ms)
-                    .slideY(begin: 0.1, end: 0);
-              }, childCount: crises.length),
-            ),
+            sliver: incidents.isEmpty
+                ? const SliverFillRemaining(
+                    child: Center(
+                      child: Text(
+                        'No active incidents detected.\nTrigger a demo scenario in the backend.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white24),
+                      ),
+                    ),
+                  )
+                : SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final incident = incidents[index];
+                      return IncidentCard(incident: incident)
+                          .animate()
+                          .fadeIn(duration: 500.ms, delay: (index * 100).ms)
+                          .slideY(begin: 0.1, end: 0);
+                    }, childCount: incidents.length),
+                  ),
           ),
         ],
       ),
@@ -81,8 +93,8 @@ class CityStatusBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final crises = ref.watch(mockCrisisProvider);
-    final highSeverityCount = crises.where((c) => c.severity >= 4).length;
+    final incidents = ref.watch(incidentProvider);
+    final highSeverityCount = incidents.where((i) => (i.classification?.severity ?? 0) >= 4).length;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -93,17 +105,17 @@ class CityStatusBar extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Icon(LucideIcons.activity, size: 14, color: Colors.green),
+          const Icon(LucideIcons.activity, size: 14, color: Colors.green),
           const SizedBox(width: 8),
           Text(
-            '${crises.length} ACTIVE',
+            '${incidents.length} ACTIVE',
             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
           ),
           if (highSeverityCount > 0) ...[
             const SizedBox(width: 8),
             Container(width: 1, height: 12, color: Colors.white24),
             const SizedBox(width: 8),
-            Icon(
+            const Icon(
               LucideIcons.alertTriangle,
               size: 14,
               color: AppTheme.crisisRed,
@@ -111,7 +123,7 @@ class CityStatusBar extends ConsumerWidget {
             const SizedBox(width: 4),
             Text(
               '$highSeverityCount CRITICAL',
-              style: TextStyle(
+              style: const TextStyle(
                 color: AppTheme.crisisRed,
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -124,19 +136,21 @@ class CityStatusBar extends ConsumerWidget {
   }
 }
 
-class ExpandableCrisisCard extends StatefulWidget {
-  final Crisis crisis;
-  const ExpandableCrisisCard({super.key, required this.crisis});
+class IncidentCard extends StatefulWidget {
+  final Incident incident;
+  const IncidentCard({super.key, required this.incident});
 
   @override
-  State<ExpandableCrisisCard> createState() => _ExpandableCrisisCardState();
+  State<IncidentCard> createState() => _IncidentCardState();
 }
 
-class _ExpandableCrisisCardState extends State<ExpandableCrisisCard> {
+class _IncidentCardState extends State<IncidentCard> {
   bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
+    final cls = widget.incident.classification;
+    
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       margin: const EdgeInsets.only(bottom: 16),
@@ -144,10 +158,9 @@ class _ExpandableCrisisCardState extends State<ExpandableCrisisCard> {
         color: AppTheme.cardDark,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color:
-              _isExpanded
-                  ? AppTheme.primaryBlue.withOpacity(0.5)
-                  : Colors.white.withOpacity(0.05),
+          color: _isExpanded
+              ? AppTheme.primaryBlue.withOpacity(0.5)
+              : Colors.white.withOpacity(0.05),
           width: 1,
         ),
       ),
@@ -161,24 +174,24 @@ class _ExpandableCrisisCardState extends State<ExpandableCrisisCard> {
             children: [
               Row(
                 children: [
-                  _TypeIcon(type: widget.crisis.type),
+                  _TypeIcon(type: cls?.crisisType ?? 'unknown'),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.crisis.location,
+                          widget.incident.location.areaName,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         Text(
-                          '${_formatTime(widget.crisis.timestamp)} • ${_getConfidenceText()}',
+                          '${_formatTime(widget.incident.updatedAt)} • ${_getConfidenceText()}',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
                     ),
                   ),
-                  _SeverityBadge(severity: widget.crisis.severity),
+                  if (cls != null) _SeverityBadge(severity: cls.severity),
                 ],
               ),
               const SizedBox(height: 16),
@@ -186,14 +199,14 @@ class _ExpandableCrisisCardState extends State<ExpandableCrisisCard> {
                 children: [
                   Expanded(
                     child: _ConfidenceRing(
-                      confidence: widget.crisis.confidence,
+                      confidence: cls?.confidence ?? 0.0,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     flex: 4,
                     child: Text(
-                      widget.crisis.description,
+                      cls?.reasoning ?? 'Initial signal fusion in progress. Agents are classifying the event...',
                       style: Theme.of(context).textTheme.bodyLarge,
                       maxLines: _isExpanded ? 10 : 2,
                       overflow: TextOverflow.ellipsis,
@@ -205,12 +218,21 @@ class _ExpandableCrisisCardState extends State<ExpandableCrisisCard> {
                 const SizedBox(height: 24),
                 const Divider(height: 1, color: Colors.white10),
                 const SizedBox(height: 16),
-                _AgentReasoningSummary(crisis: widget.crisis),
+                _AgentPipelineStatus(stage: widget.incident.pipelineStage),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => IncidentDetailScreen(
+                            incident: widget.incident,
+                          ),
+                        ),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryBlue,
                       foregroundColor: Colors.white,
@@ -230,7 +252,8 @@ class _ExpandableCrisisCardState extends State<ExpandableCrisisCard> {
   }
 
   String _getConfidenceText() {
-    return '${(widget.crisis.confidence * 100).toInt()}% Confidence';
+    final confidence = widget.incident.classification?.confidence ?? 0.0;
+    return '${(confidence * 100).toInt()}% Confidence';
   }
 
   String _formatTime(DateTime dt) {
@@ -241,29 +264,29 @@ class _ExpandableCrisisCardState extends State<ExpandableCrisisCard> {
 }
 
 class _TypeIcon extends StatelessWidget {
-  final CrisisType type;
+  final String type;
   const _TypeIcon({required this.type});
 
   @override
   Widget build(BuildContext context) {
     IconData icon;
     Color color;
-    switch (type) {
-      case CrisisType.urbanFlooding:
+    switch (type.toLowerCase()) {
+      case 'urban_flooding':
         icon = LucideIcons.waves;
         color = Colors.blue;
         break;
-      case CrisisType.heatwave:
+      case 'heatwave':
         icon = LucideIcons.sun;
         color = Colors.orange;
         break;
-      case CrisisType.roadAccident:
-        icon = LucideIcons.car;
-        color = Colors.red;
-        break;
-      case CrisisType.fire:
+      case 'fire':
         icon = LucideIcons.flame;
         color = Colors.deepOrange;
+        break;
+      case 'infrastructure_failure':
+        icon = LucideIcons.building;
+        color = Colors.grey;
         break;
       default:
         icon = LucideIcons.alertTriangle;
@@ -287,10 +310,9 @@ class _ConfidenceRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color color =
-        confidence > 0.8
-            ? Colors.green
-            : (confidence > 0.5 ? Colors.orange : Colors.red);
+    Color color = confidence > 0.8
+        ? Colors.green
+        : (confidence > 0.5 ? Colors.orange : Colors.red);
     return SizedBox(
       height: 60,
       width: 60,
@@ -323,10 +345,9 @@ class _SeverityBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color color =
-        severity >= 4
-            ? AppTheme.crisisRed
-            : (severity >= 3 ? AppTheme.emergencyOrange : Colors.yellow);
+    Color color = severity >= 4
+        ? AppTheme.crisisRed
+        : (severity >= 3 ? AppTheme.emergencyOrange : Colors.yellow);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -346,9 +367,9 @@ class _SeverityBadge extends StatelessWidget {
   }
 }
 
-class _AgentReasoningSummary extends StatelessWidget {
-  final Crisis crisis;
-  const _AgentReasoningSummary({required this.crisis});
+class _AgentPipelineStatus extends StatelessWidget {
+  final String stage;
+  const _AgentPipelineStatus({required this.stage});
 
   @override
   Widget build(BuildContext context) {
@@ -357,37 +378,21 @@ class _AgentReasoningSummary extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(
+            const Icon(
               LucideIcons.brainCircuit,
               size: 14,
               color: AppTheme.primaryBlue,
             ),
             const SizedBox(width: 8),
             Text(
-              'AGENT REASONING',
-              style: TextStyle(
+              'PIPELINE STAGE: ${stage.toUpperCase()}',
+              style: const TextStyle(
                 color: AppTheme.primaryBlue,
                 fontWeight: FontWeight.bold,
                 fontSize: 11,
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.black26,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            'Signal fusion detected a cluster of 12 social reports and a 40% water level spike at local sensors. Classification Agent identifies high probability of urban flooding. Cross-referencing with weather API confirms heavy rainfall (45mm/hr).',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.white.withOpacity(0.8),
-              height: 1.4,
-            ),
-          ),
         ),
       ],
     );

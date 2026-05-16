@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../crisis_feed/screens/crisis_feed_screen.dart';
 import '../incident_map/screens/incident_map_screen.dart';
+import '../traces/screens/agent_traces_screen.dart';
+import '../alerts/screens/alerts_screen.dart';
 
 class MainNavigationScreen extends ConsumerStatefulWidget {
   const MainNavigationScreen({super.key});
@@ -18,8 +20,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     const CrisisFeedScreen(),
     const IncidentMapScreen(),
     const PlaceholderScreen(title: 'Resources'),
-    const PlaceholderScreen(title: 'Traces'),
-    const PlaceholderScreen(title: 'Alerts'),
+    const AgentTracesScreen(incidentId: 'LATEST'), // Default or latest
+    const AlertsScreen(),
   ];
 
   @override
