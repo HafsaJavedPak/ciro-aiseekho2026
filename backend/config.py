@@ -14,6 +14,9 @@ class Settings:
     OPENWEATHER_API_KEY: str = os.getenv("OPENWEATHER_API_KEY", "")
     OPENWEATHER_BASE_URL: str = "https://api.openweathermap.org/data/2.5"
     
+    # Google AI Studio (Gemini)
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    
     # Firebase
     FIREBASE_PROJECT_ID: str = os.getenv("FIREBASE_PROJECT_ID", "")
     GOOGLE_APPLICATION_CREDENTIALS: str = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "")

@@ -1,0 +1,1322 @@
+﻿CIRO: Complete Hackathon Execution Plan
+1. Deep Challenge Analysis
+Core Technical Challenges
+The real difficulty here isn't any single component — it's the integration surface. Each piece (signal fusion, classification, allocation, simulation, notification) is straightforward in isolation. The challenge is making them feel like a coherent, flowing intelligence rather than five disconnected modules bolted together.
+The second hidden difficulty is Google Antigravity. Judges will look for genuine orchestration — agents that actually reason, delegate, and hand off — not a single LLM call you've labeled "multi-agent." This distinction will separate top teams from the rest.
+The third challenge is demoability under pressure. Live demos at hackathons fail constantly. Your architecture must be able to run on cached/mock data without breaking the illusion.
+What Most Teams Will Build
+* A single backend LLM call that classifies crisis from combined text
+* A map with markers
+* Hardcoded "resource allocation" that's just a sorted list
+* Antigravity used as a label, not real orchestration
+* A web dashboard, forgetting the mobile-first mandate
+* Beautiful UI with fragile data pipelines
+How You Differentiate
+* Real Antigravity traces shown live in the app — the agent reasoning process visible to judges
+* Two simultaneous crises with resource conflict resolution happening in real-time, visually
+* A false alarm recovery arc in your demo that shows the system self-correcting — this alone impresses judges because no one builds it
+* Explainable decisions — every allocation decision shows why, not just what
+* The mobile app as command center, not afterthought
+Scoring Strategy (Where to Spend Effort)
+Criterion
+	Weight
+	Effort ROI
+	Strategy
+	Crisis Detection & Severity
+	25%
+	Very High
+	wSpend real engineering here
+	Antigravity Integration
+	20%
+	Very High
+	Build real traces, show them
+	Resource Optimization
+	20%
+	High
+	Make it explainable and visual
+	Impact Simulation
+	15%
+	High
+	Polish the visualization
+	Robustness/Scalability
+	10%
+	Medium
+	Mock it intelligently
+	Innovation & UX
+	10%
+	Very High
+	Flutter developer's domain
+	Verdict: Spend 60% of effort on Antigravity integration + crisis detection + the demo flow. The UX developer can make robustness look handled without engineering all of it.
+________________
+
+
+2. MVP Definition
+MUST HAVE (Non-negotiable for scoring)
+* [ ] Antigravity multi-agent pipeline with real trace logs visible in app
+* [ ] Signal fusion from 3+ sources (weather API, mock social stream, mock sensor feed)
+* [ ] Crisis classification with confidence score and type label
+* [ ] Severity prediction with affected radius and population estimate
+* [ ] Resource allocation across 2 simultaneous incidents with conflict resolution
+* [ ] Simulated response actions with before/after state
+* [ ] Stakeholder notification generation (at least 3 audience types)
+* [ ] Flutter mobile app as primary interface
+* [ ] False alarm detection and correction flow
+* [ ] Agent trace view in the app
+SHOULD HAVE (High demo impact, feasible)
+* [ ] Live-updating crisis feed with signal velocity
+* [ ] Interactive map with crisis radius, resource positions, routes
+* [ ] Credibility scoring display per signal
+* [ ] Response timeline showing action sequence and estimated impact
+* [ ] Degraded mode indicator when an API is down
+* [ ] Manual override for field commander
+OPTIONAL STRETCH (Only if ahead of schedule)
+* [ ] Web dashboard (command center view)
+* [ ] Push notifications to mobile
+* [ ] Historical incident replay
+* [ ] Real social media ingestion (Twitter/X or Bluesky)
+* [ ] PDF incident report export
+________________
+
+
+3. System Architecture
+High-Level Architecture
+  ________________
+
+
+
+
+
+
+┌─────────────────────────────────────────────────────────────────┐
+│                         SIGNAL LAYER                            │
+│  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐ │
+│  │ OpenWeather  │  │ Mock Social  │  │  Mock IoT Sensor Feed  │ │
+│  │    API       │  │   Stream     │  │  (City sensors, calls) │ │
+│  └──────┬───────┘  └──────┬───────┘  └───────────┬────────────┘ │
+└─────────┼─────────────────┼──────────────────────┼─────────────┘
+          │                 │                       │
+          ▼                 ▼                       ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      INGESTION SERVICE                          │
+│  Signal Normalizer → Deduplicator → Credibility Scorer         │
+│  → Geolocation Extractor → Urgency Detector → Event Queue      │
+└───────────────────────────────┬─────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              GOOGLE ANTIGRAVITY ORCHESTRATION LAYER             │
+│                                                                 │
+│  ┌─────────────────┐     ┌──────────────────┐                  │
+│  │ Signal Fusion   │────▶│ Credibility &    │                  │
+│  │    Agent        │     │ Conflict Agent   │                  │
+│  └─────────────────┘     └────────┬─────────┘                  │
+│                                   │                            │
+│                                   ▼                            │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              Crisis Classification Agent                │   │
+│  │  (type, severity, confidence, location, population)     │   │
+│  └────────────────────────┬────────────────────────────────┘   │
+│                           │                                    │
+│            ┌──────────────┼──────────────┐                     │
+│            ▼              ▼              ▼                     │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐           │
+│  │  Severity &  │ │  Resource    │ │  Simulation  │           │
+│  │  Prediction  │ │ Allocation   │ │    Agent     │           │
+│  │    Agent     │ │    Agent     │ │              │           │
+│  └──────┬───────┘ └──────┬───────┘ └──────┬───────┘           │
+│         └────────────────┼────────────────┘                    │
+│                          ▼                                     │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │           Stakeholder Messaging Agent                   │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                          │                                     │
+│                          ▼                                     │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │          Recovery / Correction Agent                    │   │
+│  │  (false alarm detection, signal contradiction, retract) │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        BACKEND API LAYER                        │
+│           FastAPI (Python) + Firebase Firestore                 │
+│    REST + WebSocket endpoints for mobile and web clients        │
+└─────────────────┬──────────────────────┬───────────────────────┘
+                  │                      │
+                  ▼                      ▼
+┌─────────────────────┐     ┌────────────────────────────────────┐
+│   Flutter Mobile    │     │     Optional Web Dashboard         │
+│   App (Primary)     │     │     (React or Flutter Web)         │
+│                     │     │                                    │
+│  - Crisis Feed      │     │  - Command Center Map              │
+│  - Agent Trace View │     │  - Multi-incident overlay          │
+│  - Resource Map     │     │  - Full trace logs                 │
+│  - Alert Panel      │     │                                    │
+└─────────────────────┘     └────────────────────────────────────┘
+
+
+Data Flow Explanation
+Signal → Decision → Action → Feedback is the core loop:
+1. Signals arrive from 3 sources every 30–60 seconds (or on-demand trigger for demo)
+2. Ingestion service normalizes format, deduplicates, and scores credibility
+3. Normalized events are pushed to a queue (Redis or in-memory for MVP)
+4. Antigravity orchestrator is triggered; Signal Fusion Agent aggregates into incident context
+5. Classification Agent determines crisis type, severity, confidence
+6. If confidence > threshold: Severity Agent + Allocation Agent run in parallel
+7. Simulation Agent computes before/after state for each planned action
+8. Messaging Agent generates stakeholder-specific notifications
+9. All decisions, traces, and state changes persist to Firestore
+10. Mobile app receives real-time updates via WebSocket
+11. If contradictory signals arrive → Recovery Agent re-evaluates and may retract
+Event Lifecycle
+RAW_SIGNAL → NORMALIZED → CREDIBILITY_SCORED → FUSED 
+→ CLASSIFIED → SEVERITY_ASSESSED → RESOURCES_ALLOCATED 
+→ ACTIONS_SIMULATED → NOTIFICATIONS_SENT → MONITORING 
+→ (UPDATE or CLOSE or RETRACT)
+
+
+________________
+
+
+4. Google Antigravity Integration Strategy
+Important note: Google Antigravity is Google's multi-agent orchestration framework (the ADK — Agent Development Kit). Use the Python ADK with Gemini as the underlying model. All agents are defined as ADK Agent objects with explicit tools, system instructions, and handoff logic.
+Agent Design
+Principle: Each agent has ONE job, ONE clear input/output contract, and explicit tool access. Avoid agents that do everything.
+# Agent registry - define once, reference everywhere
+
+
+AGENTS = {
+    "signal_fusion":       SignalFusionAgent,
+    "credibility":         CredibilityAgent,
+    "classification":      ClassificationAgent,
+    "severity_prediction": SeverityAgent,
+    "resource_allocation": ResourceAgent,
+    "simulation":          SimulationAgent,
+    "stakeholder_msg":     StakeholderAgent,
+    "recovery":            RecoveryAgent,
+}
+
+
+Agent Responsibilities
+Signal Fusion Agent
+* Input: List of raw normalized signals from last N minutes
+* Job: Group signals by location cluster, identify co-occurring signals, compute signal coherence score
+* Output: IncidentContext object (location, signal_types, combined_confidence, raw_signals[])
+* When: Runs first, every cycle
+* AI vs Rule: Geospatial clustering is rule-based; coherence assessment is LLM-driven
+Credibility & Conflict Agent
+* Input: IncidentContext
+* Job: Score each signal source (known source weight, language urgency, geolocation precision, velocity of mentions). Detect contradictions (e.g., social posts say flood, field report says burst pipe)
+* Output: CredibilityReport (per-signal scores, contradiction flags, recommended verification steps)
+* When: Runs after fusion, before classification
+* AI vs Rule: Urgency language scoring and contradiction detection are LLM-driven; source weights are rule-based lookup table
+Crisis Classification Agent
+* Input: IncidentContext + CredibilityReport
+* Job: Classify crisis type, assign severity level (1–5), compute overall confidence (0–1), extract affected area
+* Output: CrisisClassification (type, severity, confidence, location, affected_radius_km, affected_population)
+* When: Core classification step
+* AI vs Rule: Type classification is LLM with structured output; severity thresholds are rule-augmented
+Severity & Prediction Agent
+* Input: CrisisClassification + historical context
+* Job: Predict evolution (peak time, spread risk, duration estimate, uncertainty range). Identify vulnerable populations in radius
+* Output: SeverityPrediction (peak_time, duration_hours, spread_risk, uncertainty_pct, vulnerable_population)
+* When: Runs in parallel with Resource Allocation
+* AI vs Rule: Peak time/duration uses heuristic formulas + LLM adjustment; spread risk is LLM reasoning
+Resource Allocation Agent
+* Input: CrisisClassification + all active crises + current resource state
+* Job: Assign resources to incidents, resolve conflicts when two crises compete for same unit, explain tradeoffs
+* Output: AllocationPlan (assignments[], conflicts_detected[], tradeoff_explanations[])
+* When: Runs after classification; re-runs if new crisis emerges
+* AI vs Rule: Conflict detection and tradeoff explanation are LLM-driven; scoring formula is deterministic
+Simulation Agent
+* Input: AllocationPlan + SeverityPrediction
+* Job: For each planned action, compute before state → after state, estimate response time delta, congestion impact, side effects
+* Output: SimulationResult[] (action, before, after, response_time_improvement, congestion_delta, side_effects[])
+* When: Runs after allocation
+* AI vs Rule: Mostly rule-based with parameterized formulas; LLM used only for side-effect narrative
+Stakeholder Messaging Agent
+* Input: CrisisClassification + AllocationPlan + SimulationResult
+* Job: Generate tailored messages for each stakeholder type
+* Output: StakeholderMessages {public_alert, emergency_services_brief, hospital_notification, utility_alert, media_release, command_summary}
+* When: Runs after simulation
+* AI vs Rule: Pure LLM with structured prompts per audience type
+Recovery / Correction Agent
+* Input: New incoming signals + existing CrisisClassification
+* Job: Detect if new evidence contradicts existing classification, trigger re-classification, generate retraction if needed
+* Output: CorrectionAction (action_type: CONFIRM|UPDATE|RETRACT, updated_classification, retraction_message)
+* When: Monitors continuously; triggered on contradictory signals
+* AI vs Rule: Contradiction detection is LLM; retraction threshold is rule-based
+Agent Communication Flow
+Orchestrator receives trigger
+  → SignalFusionAgent.run(signals)
+      → CredibilityAgent.run(incident_context)
+          → ClassificationAgent.run(context, credibility_report)
+              ┌──────────────────────────────────┐
+              │ Parallel execution                │
+              ├── SeverityAgent.run(classification)
+              └── ResourceAgent.run(classification, active_crises, resources)
+              └──────────────────────────────────┘
+          → SimulationAgent.run(allocation_plan, severity_prediction)
+          → StakeholderAgent.run(classification, allocation, simulation)
+  → Persist all traces to Firestore
+  → Push update to WebSocket clients
+
+
+Continuously:
+  → RecoveryAgent.monitor(new_signals, active_incidents)
+      → If contradiction detected: re-trigger ClassificationAgent
+
+
+Antigravity Trace Format
+Every agent produces a trace entry. Store these in Firestore and stream to mobile:
+{
+  "trace_id": "tr_abc123",
+  "incident_id": "inc_g10_flood_001",
+  "agent": "classification_agent",
+  "timestamp": "2025-05-13T14:32:01Z",
+  "input_summary": "3 signals: weather (heavy rain, conf=0.9), social (12 posts, flood keywords, conf=0.7), sensor (water level +40%, conf=0.85)",
+  "reasoning": "Multiple high-confidence signals co-located in G-10 sector. Dominant hypothesis: urban flooding. Counter-hypothesis: burst water main (1 field report, lower confidence). Ruling: Urban Flooding, confidence 0.78.",
+  "output": {
+    "crisis_type": "urban_flooding",
+    "severity": 4,
+    "confidence": 0.78,
+    "affected_radius_km": 1.2,
+    "affected_population": 8400,
+    "counter_hypothesis": "burst_water_main",
+    "counter_confidence": 0.22
+  },
+  "decision": "CLASSIFY_AND_RESPOND",
+  "next_agent": "severity_prediction_agent",
+  "latency_ms": 1240,
+  "model": "gemini-1.5-pro"
+}
+
+
+This trace is what you show judges. It makes the AI reasoning transparent and impressive.
+Where LLMs Add Real Value (Don't Waste Tokens Elsewhere)
+Task
+	Use LLM?
+	Why
+	Crisis type classification
+	Yes
+	Nuanced natural language reasoning
+	Contradiction detection
+	Yes
+	Semantic comparison of conflicting claims
+	Stakeholder message drafting
+	Yes
+	Core language generation task
+	Severity narrative
+	Yes
+	Explaining uncertainty to humans
+	Geospatial clustering
+	No
+	Use simple distance formula
+	Resource scoring
+	No
+	Deterministic formula is faster/cheaper
+	Deduplication
+	No
+	Hash + fuzzy matching
+	Travel time estimation
+	No
+	Distance / speed constant
+	Alert thresholding
+	No
+	Rules are more reliable
+	________________
+
+
+5. Multi-Signal Fusion Design
+Recommended Signal Sources (Free + Buildable)
+Source 1: OpenWeatherMap API (Real)
+* Free tier: 60 calls/minute, current weather + alerts
+* Pull every 5 minutes for demo cities
+* Signals: rainfall intensity, temperature, wind, weather alerts
+Source 2: Mock Social Stream (Simulated, Realistic)
+* Pre-generate 50–100 realistic posts in JSON, stream them with timestamps
+* Include: flood reports, heat complaints, traffic posts, contradictory posts, misinformation examples
+* Run a simple FastAPI endpoint that streams these based on incident_trigger
+* This gives you full control for demo — critical
+Source 3: Mock IoT Sensor Feed (Simulated)
+* Represent: water level sensors, temperature stations, emergency call frequency, road sensors
+* JSON stream with sensor_id, location, value, threshold_breach flag
+* Simple Python script generating realistic noisy data
+Bonus Source 4: Citizen Reports (In-App)
+* Let users submit a report directly from the Flutter app
+* Immediate signal that feeds into the pipeline
+* Impressive for demo: judge submits a report → system reacts in 10 seconds
+Signal Normalization Schema
+Every signal, regardless of source, gets normalized to:
+{
+  "signal_id": "sig_uuid",
+  "source_type": "social | weather | sensor | citizen_report | field_report",
+  "source_name": "OpenWeatherMap | MockSocialFeed | IoTSensor_G10_W1 | CitizenApp",
+  "raw_content": "string",
+  "extracted_keywords": ["flood", "water", "stuck"],
+  "crisis_type_hint": "urban_flooding",
+  "location": {
+    "lat": 33.6844,
+    "lng": 73.0479,
+    "area_name": "G-10, Islamabad",
+    "precision": "high | medium | low"
+  },
+  "timestamp": "ISO8601",
+  "urgency_score": 0.82,
+  "credibility_score": 0.75,
+  "velocity_context": {
+    "mentions_last_5min": 12,
+    "trend": "rising"
+  },
+  "processed": false
+}
+
+
+Credibility Scoring Formula
+credibility_score = (
+    source_weight[source_type]       * 0.35 +
+    geolocation_precision_score      * 0.20 +
+    urgency_language_score           * 0.20 +
+    (1 - contradiction_penalty)      * 0.15 +
+    velocity_score                   * 0.10
+)
+
+
+source_weight = {
+  "sensor": 0.95,
+  "field_report": 0.90,
+  "weather_api": 0.88,
+  "citizen_report": 0.65,
+  "social": 0.50
+}
+
+
+velocity_score = min(mentions_last_5min / 20, 1.0)
+
+
+urgency_language_score = LLM_score (0-1, based on language analysis)
+  OR fallback: keyword matching (flood, fire, emergency, help, trapped → high)
+
+
+contradiction_penalty = 0.3 if contradicting_signal_exists else 0.0
+
+
+Contradiction Detection Logic
+def detect_contradiction(signals: list[Signal]) -> ContradictionReport:
+    # Group by location cluster
+    # Compare crisis_type_hints
+    if len(set(s.crisis_type_hint for s in signals)) > 1:
+        # Send to LLM for resolution with all signals as context
+        return llm_resolve_contradiction(signals)
+    return ContradictionReport(contradiction=False)
+
+
+Sample Event Payloads
+Weather Signal:
+{
+  "signal_id": "sig_wx_001",
+  "source_type": "weather",
+  "source_name": "OpenWeatherMap",
+  "raw_content": "Heavy rain alert: 45mm/hr, flooding risk HIGH, G-10 sector",
+  "crisis_type_hint": "urban_flooding",
+  "location": {"lat": 33.68, "lng": 73.05, "area_name": "G-10", "precision": "high"},
+  "urgency_score": 0.88,
+  "credibility_score": 0.88
+}
+
+
+Social Signal:
+{
+  "signal_id": "sig_soc_042",
+  "source_type": "social",
+  "raw_content": "Street completely flooded near G-10/3 markaz, cars stalled, can't get through #IslamabadFloods",
+  "extracted_keywords": ["flooded", "cars stalled", "can't get through"],
+  "crisis_type_hint": "urban_flooding",
+  "location": {"lat": 33.681, "lng": 73.048, "area_name": "G-10/3", "precision": "medium"},
+  "urgency_score": 0.79,
+  "credibility_score": 0.52,
+  "velocity_context": {"mentions_last_5min": 14, "trend": "rising"}
+}
+
+
+Sensor Signal:
+{
+  "signal_id": "sig_sen_w1",
+  "source_type": "sensor",
+  "source_name": "WaterLevelSensor_G10_W1",
+  "raw_content": "Water level: 1.8m (threshold: 1.2m). BREACH DETECTED.",
+  "crisis_type_hint": "urban_flooding",
+  "location": {"lat": 33.682, "lng": 73.047, "area_name": "G-10", "precision": "high"},
+  "urgency_score": 0.91,
+  "credibility_score": 0.95
+}
+
+
+________________
+
+
+6. Crisis Detection & Prediction Logic
+Classification Pipeline
+Step 1: Spatial Clustering (Rule-based)
+  → Group signals within 1.5km radius
+  → Minimum 2 signals to form candidate incident
+
+
+Step 2: Type Voting (Hybrid)
+  → Count crisis_type_hints per cluster
+  → Weight by credibility
+  → Leading type becomes primary hypothesis
+  → LLM confirms or overrides with reasoning if votes are close
+
+
+Step 3: Confidence Calculation (Formula)
+  confidence = (
+      avg_credibility_of_signals    * 0.40 +
+      signal_count_score            * 0.25 +
+      source_diversity_score        * 0.20 +
+      (1 - contradiction_factor)    * 0.15
+  )
+  signal_count_score = min(signal_count / 5, 1.0)
+  source_diversity_score = unique_source_types / total_source_types
+
+
+Step 4: Severity Scoring (Rule + LLM)
+  severity_level (1-5) based on:
+  - confidence threshold
+  - crisis type base severity
+  - sensor breach magnitude
+  - affected area size
+  - time of day (peak hours = higher severity)
+
+
+Step 5: LLM Classification Confirmation
+  Prompt: "Given these signals, classify this crisis. Output JSON only."
+  Model output: {type, severity, confidence, reasoning, counter_hypothesis}
+
+
+Severity Scoring
+def compute_severity(crisis_type, confidence, signal_data) -> int:
+    base_severity = {
+        "urban_flooding": 3,
+        "heatwave": 3,
+        "road_accident": 2,
+        "power_outage": 2,
+        "fire": 4,
+        "infrastructure_failure": 3,
+    }
+    
+    score = base_severity.get(crisis_type, 2)
+    
+    # Modifiers
+    if confidence > 0.85: score += 1
+    if signal_data.sensor_breach_magnitude > 1.5: score += 1
+    if signal_data.mention_velocity > 20: score += 1
+    if signal_data.time_of_day in ["peak_morning", "peak_evening"]: score += 1
+    
+    return min(score, 5)
+
+
+Evolution Prediction (Lightweight and Believable)
+Rather than training a model, use parameterized heuristics with LLM-generated narrative:
+CRISIS_EVOLUTION_PARAMS = {
+    "urban_flooding": {
+        "peak_time_hours": 1.5,
+        "duration_hours": 4.0,
+        "spread_rate_km_per_hour": 0.3,
+        "spontaneous_resolution": False,
+    },
+    "heatwave": {
+        "peak_time_hours": 3.0,
+        "duration_hours": 8.0,
+        "spread_rate_km_per_hour": 0,
+        "spontaneous_resolution": False,
+    },
+    ...
+}
+
+
+def predict_evolution(crisis_type, severity, location):
+    params = CRISIS_EVOLUTION_PARAMS[crisis_type]
+    affected_radius = 0.5 + (severity * 0.3) + random.gauss(0, 0.1)
+    peak_time = datetime.now() + timedelta(hours=params["peak_time_hours"])
+    duration = params["duration_hours"] * (0.8 + severity * 0.1)
+    spread_radius_at_peak = affected_radius + (params["spread_rate_km_per_hour"] * params["peak_time_hours"])
+    affected_population = estimate_population(location, spread_radius_at_peak)
+    
+    return SeverityPrediction(
+        peak_time=peak_time,
+        duration_hours=duration,
+        affected_radius_km=affected_radius,
+        spread_radius_km=spread_radius_at_peak,
+        affected_population=affected_population,
+        uncertainty_pct=max(10, 30 - (confidence * 20)),
+    )
+
+
+The LLM then takes this data and writes the narrative text that appears in the app — humans read narrative, not numbers.
+________________
+
+
+7. Resource Allocation Engine
+Resource Model
+RESOURCES = {
+    "ambulances": {"total": 12, "available": 9, "location": [...]},
+    "rescue_teams": {"total": 4, "available": 3, "location": [...]},
+    "police_units": {"total": 8, "available": 6, "location": [...]},
+    "water_tankers": {"total": 3, "available": 2, "location": [...]},
+    "shelters": {"total": 5, "available": 4, "capacity": [200, 150, 300, 180, 250]},
+    "utility_teams": {"total": 3, "available": 2, "location": [...]},
+}
+
+
+Prioritization Algorithm
+Use a weighted priority score — no linear programming, no genetic algorithms. Fast, explainable, demo-friendly:
+def compute_incident_priority(incident):
+    return (
+        incident.severity              * 0.35 +
+        incident.confidence            * 0.20 +
+        incident.affected_population_k * 0.25 +  # in thousands
+        incident.vulnerability_index   * 0.10 +  # 0-1 (low-income, elderly population)
+        incident.spread_risk           * 0.10
+    )
+
+
+def allocate_resources(incidents, resources):
+    # Sort incidents by priority (descending)
+    sorted_incidents = sorted(incidents, key=compute_incident_priority, reverse=True)
+    
+    allocation_plan = []
+    for incident in sorted_incidents:
+        required = CRISIS_RESOURCE_REQUIREMENTS[incident.crisis_type][incident.severity]
+        assigned = {}
+        conflicts = []
+        
+        for resource_type, quantity_needed in required.items():
+            available = resources[resource_type]["available"]
+            if available >= quantity_needed:
+                assigned[resource_type] = quantity_needed
+                resources[resource_type]["available"] -= quantity_needed
+            elif available > 0:
+                assigned[resource_type] = available
+                conflicts.append({
+                    "resource": resource_type,
+                    "needed": quantity_needed,
+                    "assigned": available,
+                    "deficit": quantity_needed - available,
+                    "reason": f"Already committed to {[i.id for i in sorted_incidents if i != incident]}"
+                })
+                resources[resource_type]["available"] = 0
+            else:
+                conflicts.append({"resource": resource_type, "needed": quantity_needed, "assigned": 0})
+        
+        allocation_plan.append(AllocationResult(incident_id=incident.id, assigned=assigned, conflicts=conflicts))
+    
+    return allocation_plan
+
+
+Travel Time Estimation
+def estimate_travel_time(resource_location, incident_location, crisis_type):
+    distance_km = haversine(resource_location, incident_location)
+    # Base speed 40 km/h urban, adjusted for congestion
+    congestion_factor = 1.3 if crisis_type in ["urban_flooding", "road_accident"] else 1.0
+    travel_time_min = (distance_km / 40) * 60 * congestion_factor
+    return round(travel_time_min, 1)
+
+
+Multi-Crisis Conflict Resolution
+When two crises need the same ambulance:
+1. Both incidents scored
+2. Higher-priority incident gets full allocation first
+3. Deficit for lower-priority incident is logged as a conflict
+4. LLM generates the tradeoff explanation for the trace: "Rescue Team Alpha assigned to G-10 flooding (severity 4, pop. 8,400) rather than I-9 accident (severity 3, pop. 200) due to higher combined priority score. ETA to I-9 via Police Unit Bravo as substitute: 7 minutes."
+5. Escalation flag set if deficit exceeds 50% of required resources
+________________
+
+
+8. Impact Simulation Engine
+Simulation Model
+For each response action, compute a simple delta model:
+@dataclass
+class SimulationResult:
+    action_id: str
+    action_type: str          # "DISPATCH_RESCUE", "REROUTE_TRAFFIC", etc.
+    before_state: dict
+    action_taken: str
+    after_state: dict
+    response_time_improvement_min: float
+    congestion_change_pct: float
+    resource_cost: dict
+    side_effects: list[str]
+    confidence: float
+
+
+Action Templates
+ACTION_EFFECTS = {
+    "DISPATCH_RESCUE_TEAM": {
+        "before": {"rescue_coverage_pct": 0, "estimated_trapped": "UNKNOWN"},
+        "after_delta": {"rescue_coverage_pct": +85, "estimated_evacuation_time_hr": -2.5},
+        "congestion_impact": +0.12,  # Rescue vehicles add 12% congestion
+        "side_effects": ["Increased traffic on Route A7", "Shelter capacity required"]
+    },
+    "REROUTE_TRAFFIC": {
+        "before": {"avg_speed_kmh": 8, "congestion_pct": 78},
+        "after_delta": {"avg_speed_kmh": +22, "congestion_pct": -31},
+        "side_effects": ["Alternate route I-8 sees 40% traffic increase", "Adds 6 min to alternate route"]
+    },
+    "ISSUE_PUBLIC_ALERT": {
+        "before": {"population_awareness_pct": 5},
+        "after_delta": {"population_awareness_pct": +73},
+        "side_effects": ["Risk of panic evacuation", "Phone network congestion likely"]
+    },
+    "HOSPITAL_PREPARATION": {
+        "before": {"trauma_beds_ready": 4},
+        "after_delta": {"trauma_beds_ready": +12, "response_readiness_pct": +45},
+        "side_effects": ["Non-emergency procedures delayed by 2-3 hours"]
+    }
+}
+
+
+Realistic Simulation Numbers
+The secret: all your "simulation" numbers should be derived from the crisis severity and affected population, not hardcoded. This makes it feel dynamic:
+def simulate_action(action_type, crisis, allocation):
+    template = ACTION_EFFECTS[action_type]
+    
+    # Scale effects by severity and population
+    scale_factor = (crisis.severity / 5) * (crisis.affected_population / 10000)
+    
+    after_state = apply_delta(template["before"], template["after_delta"], scale_factor)
+    
+    response_time_improvement = (
+        template.get("base_improvement_min", 15) * (1 + scale_factor * 0.3)
+    )
+    
+    return SimulationResult(
+        before_state=template["before"],
+        after_state=after_state,
+        response_time_improvement_min=response_time_improvement,
+        side_effects=template["side_effects"],
+        ...
+    )
+
+
+________________
+
+
+9. UX/UI Design Strategy
+What Judges Care About Visually
+1. The map — crises on a live map with radius overlays, resource positions, and routes. Non-negotiable. This is the first thing judges look at.
+2. The agent trace panel — seeing AI reasoning in real-time, line by line, is always impressive. Show it prominently.
+3. The resource conflict moment — visually showing two crises competing for resources and the resolution is memorable.
+4. Before/after simulation — side-by-side state comparison with color-coded improvement indicators.
+5. The alert generation — showing a stakeholder message being composed in real-time feels magical.
+Mobile App Screens
+Screen 1: Live Crisis Feed (Home)
+* Top: City status bar (active crises count, severity badge)
+* Middle: Scrollable crisis cards (type icon, location, severity badge, confidence ring, time since detected)
+* Each card: expandable → shows signals contributing, agent reasoning summary
+* Bottom nav: Feed | Map | Resources | Alerts | Traces
+Screen 2: Incident Map
+* Full-screen Google Maps / Mapbox
+* Circular radius overlays per crisis (color = severity)
+* Resource markers (ambulance, police icons) with route lines to assigned crises
+* Tap crisis → bottom sheet with quick summary + View Details button
+* Live updating — markers move, radii expand as severity evolves
+Screen 3: Resource Dashboard
+* Bar charts per resource type: available vs deployed
+* Conflict indicator (red badge) when deficit detected
+* Tap resource → see assignment + travel time estimate
+* Multi-crisis view: side-by-side priority comparison
+Screen 4: Agent Trace Viewer
+* Vertical timeline of agent executions for selected incident
+* Each entry: agent name, timestamp, key decision, confidence, latency
+* Expandable → full reasoning text + input/output JSON
+* Color coded: green = confirmed, yellow = uncertain, red = conflicted, blue = recovery action
+Screen 5: Stakeholder Alerts
+* Tabs: Public | Emergency | Hospital | Utility | Media
+* Each: Generated message text, send status, audience icon
+* Real-time generation indicator (typing animation while LLM runs)
+* Copy / Forward action
+Screen 6: Submit Field Report (Citizen Input)
+* Simple form: What type? Where? (auto-detects location) Describe briefly
+* Photo attach (optional)
+* Submit → shows "Signal received, processing..." → see it appear in crisis feed
+"Wow Factor" UI Moments
+* Agent reasoning appearing character by character (stream the LLM output)
+* Resource conflict animation — two crisis cards both "pulling" on the same ambulance icon, then resolution
+* False alarm retraction — crisis card collapses with "VERIFIED: FALSE ALARM" banner, stakeholder retraction message auto-generated
+* Severity escalation — crisis card smoothly transitions from yellow to red as severity increases
+* Citizen report integration — someone submits a report from the demo phone → it appears in the live feed in seconds → the AI incorporates it into the assessment
+Recommended Flutter Libraries
+dependencies:
+  # Maps
+  google_maps_flutter: ^2.5.0
+  # OR
+  flutter_map: ^6.0.0  # OSM-based, no API key needed for basic use
+  
+  # State Management
+  riverpod: ^2.4.0  # or bloc — pick what you know
+  
+  # Real-time
+  web_socket_channel: ^2.4.0
+  
+  # Charts / Visualization
+  fl_chart: ^0.65.0
+  
+  # UI Components
+  flutter_animate: ^4.5.0    # smooth animations
+  shimmer: ^3.0.0            # loading skeletons
+  
+  # HTTP
+  dio: ^5.4.0
+  
+  # Notifications
+  flutter_local_notifications: ^17.0.0
+
+
+________________
+
+
+10. Recommended Tech Stack
+Full Stack Decision
+Layer
+	Choice
+	Why
+	Mobile
+	Flutter
+	Team strength, cross-platform, great maps
+	Backend Framework
+	FastAPI (Python)
+	Fast to build, async, Pydantic validation
+	AI Orchestration
+	Google ADK (Antigravity) + Gemini
+	Mandatory, best integration
+	LLM
+	Gemini 1.5 Flash (primary)
+	Free tier, fast, structured output
+	Database
+	Firebase Firestore
+	Real-time sync to Flutter, free tier, no ops
+	Auth
+	Firebase Auth
+	Same ecosystem, trivial to set up
+	Hosting
+	Cloud Run (Google)
+	Free tier, Docker, scales to zero
+	Queue
+	In-memory queue (Python asyncio)
+	No Kafka overhead for MVP
+	Maps (backend)
+	Google Maps Geocoding API
+	Free tier sufficient
+	Weather
+	OpenWeatherMap Free Tier
+	60 calls/min, current + alerts
+	WebSocket
+	FastAPI WebSocket
+	Built-in, no extra service
+	Logging/Traces
+	Firestore + Google Cloud Logging
+	Persistent, queryable, free tier
+	CI/CD
+	GitHub Actions → Cloud Run
+	Simple, fast
+	What to Avoid
+* Kafka / RabbitMQ — overkill, adds ops complexity with zero demo benefit
+* Kubernetes — absolutely not for 6 days
+* Training custom ML models — use LLMs + heuristics instead
+* Vector databases (Pinecone, Weaviate) — not needed for this problem
+* PostgreSQL + migrations — Firestore is faster to develop against for this use case
+* Redis — only add if you hit real performance issues
+Free Tier Summary
+Service
+	Free Tier
+	Sufficient?
+	Gemini Flash
+	15 req/min, 1M tokens/day
+	Yes for demo
+	Firebase Firestore
+	1GB storage, 50k reads/day
+	Yes
+	Cloud Run
+	2M requests/month
+	Yes
+	OpenWeatherMap
+	60 calls/min
+	Yes
+	Google Maps
+	$200/month credit
+	Yes
+	________________
+
+
+11. AI/LLM Strategy
+Model Choice
+Use Gemini 1.5 Flash as primary — it supports structured JSON output, has a generous free tier, and integrates natively with ADK.
+Keep Gemini 1.5 Pro on standby for the most complex reasoning tasks (contradiction detection, recovery agent) — but only call it when needed to preserve rate limits.
+Structured Output Strategy
+Never ask the LLM to produce free-form text for anything that feeds into business logic. Use Pydantic schemas enforced via function calling / response schema:
+from google.generativeai import GenerativeModel
+import google.generativeai as genai
+
+
+# Define schema for crisis classification output
+classification_schema = {
+    "type": "object",
+    "properties": {
+        "crisis_type": {"type": "string", "enum": ["urban_flooding", "heatwave", "road_accident", "power_outage", "fire", "infrastructure_failure", "disease_cluster"]},
+        "severity": {"type": "integer", "minimum": 1, "maximum": 5},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "reasoning": {"type": "string"},
+        "counter_hypothesis": {"type": "string"},
+        "counter_confidence": {"type": "number"}
+    },
+    "required": ["crisis_type", "severity", "confidence", "reasoning"]
+}
+
+
+# Pass as response_schema to Gemini API
+
+
+Prompt Engineering Pattern
+Use a consistent structure for all agent prompts:
+SYSTEM: You are [Agent Name], a specialized component of CIRO (Crisis Intelligence & Response Orchestrator). Your ONLY job is [specific task]. Output ONLY valid JSON matching the provided schema.
+
+
+CONTEXT:
+- City: [city]
+- Active incidents: [count]
+- Current resources: [summary]
+
+
+INPUT DATA:
+[structured signal/incident data]
+
+
+TASK:
+[specific instruction]
+
+
+CONSTRAINTS:
+- Do not hallucinate location names
+- If confidence < 0.4, flag for verification
+- Always include reasoning field
+- Output JSON only, no markdown
+
+
+Reliability Techniques
+* Temperature = 0 for all classification and allocation agents (deterministic)
+* Temperature = 0.3 for stakeholder messaging (some creativity allowed)
+* Schema enforcement via response_schema parameter — rejects non-conforming output
+* Retry with exponential backoff on any API failure (3 retries max)
+* Fallback response if all retries fail: use rule-based output, log as "degraded mode"
+* Validation layer after every LLM response: if schema validation fails, use fallback
+Cost Optimization
+For a hackathon demo with ~20 agent runs, you're well within free tier. But defensively:
+* Cache identical signal combinations (hash input → cache output for 5 minutes)
+* Use Flash for 80% of calls, Pro only for contradiction resolution
+* Limit stakeholder message generation to once per crisis (don't regenerate on every signal update)
+* Compress signal context: summarize signals before sending (rule-based summarizer, not LLM)
+________________
+
+
+12. Day-by-Day 6-Day Execution Plan
+Developer Roles
+* Dev A (Backend / AI): FastAPI, Antigravity agents, signal ingestion, resource allocation engine, simulation engine, WebSocket, deployment
+* Dev B (Frontend / Mobile): Flutter app, all screens, map integration, real-time UI updates, animations
+Sprint Plan
+Day 1 — Foundation & Skeleton
+Dev A:
+* Set up FastAPI project structure
+* Implement signal normalizer and schema
+* Create mock social stream endpoint (pre-generated JSON, streamable)
+* Integrate OpenWeatherMap API
+* Set up Firebase Firestore connection
+* Basic WebSocket endpoint returning mock data
+Dev B:
+* Set up Flutter project with navigation skeleton
+* Build Crisis Feed screen with mock data (hardcoded)
+* Integrate google_maps_flutter, place 2 hardcoded crisis markers
+* Set up Riverpod providers for state management
+End of Day 1: Both apps run. Backend serves mock signals. Flutter shows a map and a list.
+________________
+
+
+Day 2 — Core Intelligence
+Dev A:
+* Build Antigravity agent skeleton (all 8 agents, stub implementations)
+* Implement Signal Fusion Agent (real logic: clustering, coherence)
+* Implement Credibility Scoring (formula-based, no LLM yet)
+* Implement Crisis Classification Agent (LLM call with structured output)
+* Store traces in Firestore
+Dev B:
+* Build Agent Trace Viewer screen (reads from Firestore)
+* Build Incident Detail screen (signals list, classification output, confidence ring)
+* Connect to WebSocket, replace hardcoded data with live feed
+* Build Stakeholder Alerts screen (static layout, not yet live)
+End of Day 2: Classification pipeline runs end-to-end. Flutter shows live classification results and trace.
+________________
+
+
+Day 3 — Resource Allocation & Simulation
+Dev A:
+* Implement Resource Allocation Agent (priority scoring, conflict detection)
+* Implement Simulation Agent (before/after templates, parameterized effects)
+* Implement mock IoT sensor feed
+* Add multi-crisis handling (two incidents simultaneously)
+* Implement Stakeholder Messaging Agent (LLM call, 3 audience types)
+Dev B:
+* Build Resource Dashboard screen (availability bars, assignments)
+* Add resource markers and route lines to map
+* Implement conflict visualization (red badges, conflict cards)
+* Build simulation result view (before/after side-by-side)
+* Add severity color transitions to crisis cards
+End of Day 3: Two crises running simultaneously, resources allocated with visible conflict, simulation showing before/after.
+________________
+
+
+Day 4 — False Alarm & Recovery Flow
+Dev A:
+* Implement Recovery/Correction Agent
+* Build contradiction detection logic
+* Implement false alarm trigger mechanism (API endpoint to inject contradictory signal)
+* Implement alert retraction flow
+* Implement degraded mode (API failure → cached data → manual escalation flag)
+Dev B:
+* Build false alarm recovery UI (crisis card retraction animation)
+* Build retraction message display in alerts screen
+* Build field report submission screen (citizen input)
+* Add degraded mode indicator (banner at top of app)
+* Polish map: animated radius expansion, pulse effects on new incidents
+End of Day 4: Complete demo flow works end-to-end including false alarm scenario.
+________________
+
+
+Day 5 — Polish, Integration, Demo Prep
+Dev A:
+* Integration testing of full pipeline
+* Fix all blocking bugs
+* Set up Cloud Run deployment
+* Prepare demo trigger API (one endpoint to start the full demo scenario)
+* Write a demo_data.json with pre-scripted signal sequences
+Dev B:
+* Full UI polish pass
+* Implement streaming LLM output to Agent Trace (character by character)
+* Add flutter_animate transitions throughout
+* Test on physical device
+* Record backup demo video in case live demo fails
+End of Day 5: Polished, deployed, demo-ready. Backup video recorded.
+________________
+
+
+Day 6 — Buffer, README, Submission
+Both devs:
+* Write README (architecture, assumptions, Antigravity usage, API docs)
+* Prepare Antigravity trace logs export
+* Final demo rehearsal (3 full runs)
+* Submission packaging
+* If ahead: Add web dashboard as bonus
+Scope Cut Protocol (if behind on Day 4):
+* Cut: Web dashboard, PDF export, push notifications, real social media
+* Mock: Sensor feed as static JSON, weather as single cached API call
+* Simplify: Reduce to 6 agents from 8 (merge Credibility into Fusion, merge Simulation into Allocation)
+________________
+
+
+13. Demo Strategy
+The Winning Demo Narrative
+"In any city, crises don't announce themselves neatly. They emerge from noise — a spike in social posts, a sensor reading, a weather alert — each incomplete alone. CIRO watches all of it simultaneously, thinks through it with specialized AI agents, and coordinates a response before a human dispatcher has even finished their first coffee."
+Perfect 4-Minute Demo Flow
+Minute 0:00 — 0:30: Scene Setting
+* Show the map with a clean city
+* Explain: "We have 3 live signal sources feeding CIRO right now — weather, citizen social feed, and IoT sensors"
+* Show the signal feed ticking in real-time (pre-triggered mock stream)
+Minute 0:30 — 1:30: Crisis 1 Emerges (Flooding)
+* Trigger Crisis 1 via your demo API (flooding in G-10)
+* Watch the crisis card appear in real-time on the feed
+* Open Agent Trace: Signal Fusion Agent runs → Classification Agent runs → "Urban Flooding, Severity 4, Confidence 0.78"
+* Map: radius overlay expands around G-10
+* "Notice the confidence score. The system isn't certain yet — one field report suggests a burst water main. Watch what it does with that."
+Minute 1:30 — 2:00: Crisis 2 Emerges (Heat Emergency)
+* Trigger Crisis 2 (heat emergency in nearby neighborhood)
+* Two crisis cards visible, map shows two overlays
+* Open Resource Dashboard: "Here's where it gets interesting — both crises need ambulances, but we only have 4 available"
+Minute 2:00 — 2:30: Resource Conflict Resolution
+* Show allocation running: Priority scores computed, Crisis 1 wins full ambulance allocation, Crisis 2 gets 2 (partial)
+* Conflict card appears with explanation from the AI: "3 ambulances assigned to G-10 flooding (severity 4, 8,400 affected). Crisis I-9 receives 2 of requested 4 due to resource constraints. Medical outreach team redirected as substitute."
+* "Not just a sorted list — an explained decision with tradeoffs."
+Minute 2:30 — 3:00: Stakeholder Alerts
+* Open Alerts screen
+* Show real-time generation of Public Alert, Hospital Notification, Utility Alert
+* "Each message is tailored to its audience. The public gets a clear action alert. The hospital gets triage numbers and ETA."
+Minute 3:00 — 3:30: False Alarm Recovery (The Differentiator)
+* Trigger: inject contradictory field report ("verified burst water main, no flooding")
+* Recovery Agent activates in trace viewer
+* Crisis card flips: "RECLASSIFIED: Water Main Burst — Flood Alert Retracted"
+* New stakeholder message: "Previous flood alert for G-10 is RETRACTED. Infrastructure team dispatched."
+* "No team builds this. The system corrects itself, retracts the wrong alert, and notifies stakeholders automatically."
+Minute 3:30 — 4:00: Simulation Impact
+* Show simulation panel: before/after for traffic rerouting
+* "Response time to G-10 improved by 11 minutes due to rerouting. Side effect: I-8 sees 40% traffic increase — the system flagged this before it happened."
+* Close with: app running on physical phone, all crises managed
+Key Metrics to Show on Screen During Demo
+* 3 signal sources, 47 signals processed
+* 2 simultaneous crises managed
+* 8 AI agents, 23 decisions logged
+* Response time improved: 11.3 minutes
+* False alarm detected and corrected in 38 seconds
+* 6 stakeholder messages generated, 3 audience types
+________________
+
+
+14. Robustness & Failure Handling
+API Downtime
+class ResilientSignalSource:
+    def __init__(self, primary, fallback_cache_ttl=300):
+        self.primary = primary
+        self.cache = {}
+        self.last_success = {}
+    
+    async def fetch(self, params):
+        try:
+            result = await self.primary.fetch(params)
+            self.cache[params] = (result, time.time())
+            return result
+        except Exception as e:
+            if params in self.cache:
+                cached, ts = self.cache[params]
+                if time.time() - ts < self.cache_ttl:
+                    return CachedResult(cached, stale=True)
+            return DegradedResult(error=str(e))
+
+
+Conflicting Signals
+Already handled in the Credibility & Conflict Agent. Key principle: never silently pick one — always log the conflict and show it to the operator.
+Duplicate Incidents
+def is_duplicate(new_incident, existing_incidents, distance_threshold_km=1.0, time_window_min=30):
+    for existing in existing_incidents:
+        if (haversine(new_incident.location, existing.location) < distance_threshold_km and
+            abs((new_incident.timestamp - existing.timestamp).total_seconds()) < time_window_min * 60 and
+            new_incident.crisis_type == existing.crisis_type):
+            return True, existing.id
+    return False, None
+
+
+Degraded Mode
+When APIs fail or confidence is below threshold:
+DEGRADED_MODE_STATES = {
+    "WEATHER_API_DOWN": {
+        "action": "USE_CACHED_DATA",
+        "ui_indicator": "⚠️ Weather data stale (last updated: {time})",
+        "fallback": "Assume conditions unchanged from last 30min"
+    },
+    "LOW_CONFIDENCE": {
+        "action": "FLAG_FOR_VERIFICATION",
+        "ui_indicator": "🔍 Awaiting field verification",
+        "fallback": "Alert on reduced confidence threshold, note uncertainty"
+    },
+    "CLASSIFICATION_FAILED": {
+        "action": "RULE_BASED_FALLBACK",
+        "ui_indicator": "⚡ AI degraded — rules-based mode",
+        "fallback": "Keyword matching + sensor threshold triggers only"
+    }
+}
+
+
+Manual Override
+Any classification, allocation decision, or alert can be overridden by the field commander through the app. Override is logged with reason and operator ID. Recovery agent is notified so it doesn't auto-revert.
+________________
+
+
+15. Deliverables & Final Architecture
+Folder Structure
+ciro/
+├── backend/
+│   ├── main.py                    # FastAPI app entry
+│   ├── config.py                  # Environment, constants
+│   ├── api/
+│   │   ├── signals.py             # Signal ingestion endpoints
+│   │   ├── incidents.py           # Incident CRUD
+│   │   ├── resources.py           # Resource state endpoints
+│   │   ├── alerts.py              # Alert generation endpoints
+│   │   └── demo.py                # Demo trigger endpoints
+│   ├── agents/
+│   │   ├── orchestrator.py        # Main Antigravity orchestrator
+│   │   ├── signal_fusion.py
+│   │   ├── credibility.py
+│   │   ├── classification.py
+│   │   ├── severity_prediction.py
+│   │   ├── resource_allocation.py
+│   │   ├── simulation.py
+│   │   ├── stakeholder_messaging.py
+│   │   └── recovery.py
+│   ├── services/
+│   │   ├── weather_service.py
+│   │   ├── mock_social_stream.py
+│   │   ├── mock_sensor_stream.py
+│   │   ├── firestore_service.py
+│   │   └── websocket_manager.py
+│   ├── models/
+│   │   ├── signal.py              # Pydantic schemas
+│   │   ├── incident.py
+│   │   ├── allocation.py
+│   │   ├── simulation.py
+│   │   └── trace.py
+│   ├── utils/
+│   │   ├── geospatial.py
+│   │   ├── credibility_scorer.py
+│   │   └── deduplicator.py
+│   ├── data/
+│   │   ├── mock_social_posts.json
+│   │   ├── mock_sensors.json
+│   │   ├── demo_scenarios.json
+│   │   └── resource_definitions.json
+│   ├── Dockerfile
+│   └── requirements.txt
+│
+├── mobile/                        # Flutter project
+│   ├── lib/
+│   │   ├── main.dart
+│   │   ├── app/
+│   │   │   ├── router.dart
+│   │   │   └── theme.dart
+│   │   ├── features/
+│   │   │   ├── crisis_feed/
+│   │   │   ├── incident_map/
+│   │   │   ├── resources/
+│   │   │   ├── agent_traces/
+│   │   │   ├── alerts/
+│   │   │   └── citizen_report/
+│   │   ├── data/
+│   │   │   ├── repositories/
+│   │   │   └── models/
+│   │   └── core/
+│   │       ├── websocket/
+│   │       └── services/
+│   └── pubspec.yaml
+│
+├── docs/
+│   ├── README.md
+│   ├── architecture.md
+│   ├── agent_traces_sample.json
+│   └── api_schema.yaml
+│
+└── .github/
+    └── workflows/
+        └── deploy.yml
+
+
+DB Schema (Firestore Collections)
+/incidents/{incident_id}
+  - id, crisis_type, severity, confidence, location, status, created_at, updated_at
+
+
+/incidents/{incident_id}/signals/{signal_id}
+  - All normalized signal fields
+
+
+/incidents/{incident_id}/traces/{trace_id}
+  - All agent trace fields
+
+
+/incidents/{incident_id}/allocations/{allocation_id}
+  - Assignment plan, conflicts, tradeoffs
+
+
+/incidents/{incident_id}/simulations/{sim_id}
+  - Before/after states per action
+
+
+/incidents/{incident_id}/alerts/{alert_id}
+  - Per audience type messages
+
+
+/resources/current_state
+  - Real-time resource availability document
+
+
+/system/degraded_mode
+  - Which sources are down, fallback active
+
+
+Deployment
+# .github/workflows/deploy.yml
+name: Deploy to Cloud Run
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ciro-backend
+          region: us-central1
+          image: gcr.io/$PROJECT_ID/ciro-backend
+
+
+________________
+
+
+16. Final Recommendation
+The Smartest Implementation Strategy
+Build the demo, then build the system around it.
+On Day 1, write your demo_scenarios.json with the exact sequence of events you want to show judges. Build the backend to execute that scenario reliably first. Then generalize.
+This is the opposite of how most teams work (build system → try to demo it → discover it's boring). You want a cinematic, controlled demo that also happens to be a real system.
+What to Fake vs Build Fully
+Component
+	Build Real
+	Mock / Fake
+	Antigravity agent pipeline
+	Real
+	—
+	Gemini LLM calls
+	Real
+	—
+	OpenWeatherMap integration
+	Real
+	—
+	Resource allocation logic
+	Real
+	—
+	Social media stream
+	—
+	Mock (pre-scripted JSON)
+	IoT sensors
+	—
+	Mock (parameterized generator)
+	Population data
+	—
+	Hardcoded lookup table by area
+	Travel time
+	Haversine formula
+	—
+	Historical vulnerability maps
+	—
+	Static JSON overlay
+	Multi-city scaling
+	—
+	Mention in README
+	Biggest Risks
+1. Antigravity ADK learning curve — Start on Day 1 with ADK tutorials. Don't get blocked on Day 3 by framework issues.
+2. Gemini rate limits during live demo — Pre-run the demo scenario before presenting. Cache all outputs. Have a replay mode.
+3. Flutter WebSocket flakiness — Test on a real device, not just simulator. Use reconnection logic.
+4. Time lost on beautiful code — This is a hackathon. Write working code, not clean code.
+5. Demo API failures — Always have the mock/cached demo path as fallback.
+Biggest Opportunities
+1. The Recovery Agent — Nobody builds this. If you show a false alarm being detected and corrected with a retraction message, judges will remember CIRO specifically.
+2. Agent Trace Visualization — Making AI reasoning visible in the UI is rare and impressive. Most teams just show the output.
+3. Citizen Report → Live System Response — Letting a judge submit a report from their phone and watching it feed into the crisis intelligence in seconds is an unforgettable demo moment.
+4. Explainable Resource Conflicts — Showing why a resource was assigned elsewhere, with the AI-generated explanation, is more sophisticated than any optimization algorithm.
+Simplest Architecture That Still Wins
+If you hit Day 4 and are behind:
+* Keep: FastAPI + Firebase + Flutter + Gemini + 5 core agents
+* Drop: Web dashboard, push notifications, real social media, PDF export
+* Simplify agents: Merge Credibility into Fusion Agent; merge Simulation into Allocation Agent
+* Focus everything on: the demo flow being flawless, the trace viewer being live, the map being beautiful
+* The false alarm scenario is worth 30 minutes of engineering and 15% of your judging score — never cut it
+Final Word
+You have exactly the right team composition for this challenge. The Flutter developer owns the thing judges see. The backend developer owns the thing judges believe. Your differentiation — the Recovery Agent, the visible traces, the resource conflict storytelling — requires zero breakthrough engineering. It requires disciplined scope management and a clear demo narrative.
+Build the demo first. Then make it real. Then make it beautiful. In that order.
+Good luck — this is a very winnable challenge.

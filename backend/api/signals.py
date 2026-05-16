@@ -4,6 +4,7 @@ from backend.models.signal import RawSignal, NormalizedSignal
 from backend.utils.signal_normalizer import normalize_signal
 from backend.services.firestore_service import firestore_service
 from backend.services.websocket_manager import ws_manager
+from backend.agents.orchestrator import orchestrator
 
 router = APIRouter(prefix="/signals", tags=["Signals"])
 
@@ -29,6 +30,9 @@ async def ingest_signal(raw: RawSignal, background_tasks: BackgroundTasks):
         normalized.model_dump(),
         "signal"
     )
+    
+    # Trigger the Antigravity Agent Pipeline
+    background_tasks.add_task(orchestrator.process_signal, normalized)
     
     return normalized
 

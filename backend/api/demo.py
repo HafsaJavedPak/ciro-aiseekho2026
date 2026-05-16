@@ -1,5 +1,6 @@
 # backend/api/demo.py
 import asyncio
+from datetime import datetime
 from fastapi import APIRouter, BackgroundTasks
 from backend.services.mock_social_stream import mock_social_stream
 from backend.services.weather_service import weather_service
@@ -83,3 +84,44 @@ async def reset_demo_state():
     """Clear all active incidents for a clean demo restart."""
     await ws_manager.broadcast("demo_reset", {"message": "State cleared"}, "system")
     return {"status": "reset", "message": "Demo state cleared"}
+
+
+@router.post("/false-alarm/{incident_id}")
+async def trigger_false_alarm(incident_id: str, background_tasks: BackgroundTasks):
+    """
+    Day 4: Implement false alarm trigger mechanism.
+    Injects a highly credible field report that contradicts the current incident.
+    """
+    from backend.models.signal import RawSignal, SignalLocation
+    from backend.utils.signal_normalizer import normalize_signal
+    from backend.agents.orchestrator import orchestrator
+    
+    # We fetch the incident just to get its location to ensure Fusion matches it
+    incidents = await firestore_service.get_active_incidents()
+    target = next((i for i in incidents if i["incident_id"] == incident_id), None)
+    
+    lat = target["location"]["lat"] if target else settings.DEMO_CITY_LAT
+    lng = target["location"]["lng"] if target else settings.DEMO_CITY_LNG
+    
+    raw = RawSignal(
+        source_type="field_report",
+        source_name="rescue_unit_alpha",
+        raw_content="False alarm verified. No crisis detected on site. Cancelling alert.",
+        location=SignalLocation(
+            lat=lat,
+            lng=lng,
+            area_name="Demo Area",
+            precision="high"
+        ),
+        crisis_type_hint="unknown",
+        timestamp=datetime.utcnow()
+    )
+    
+    normalized = normalize_signal(raw)
+    normalized.credibility_score = 0.99  # Field reports are highly credible
+    
+    background_tasks.add_task(firestore_service.save_signal, normalized)
+    background_tasks.add_task(ws_manager.broadcast, "new_signal", normalized.model_dump(), "signal")
+    background_tasks.add_task(orchestrator.process_signal, normalized)
+    
+    return {"status": "false_alarm_injected", "incident_id": incident_id}
