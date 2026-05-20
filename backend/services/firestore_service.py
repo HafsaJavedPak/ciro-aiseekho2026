@@ -16,8 +16,12 @@ def _initialize_firebase():
     if firebase_admin._apps:
         return  # Already initialized
     
-    if settings.GOOGLE_APPLICATION_CREDENTIALS and settings.is_production:
-        cred = credentials.Certificate(settings.GOOGLE_APPLICATION_CREDENTIALS)
+    if settings.GOOGLE_APPLICATION_CREDENTIALS:
+        try:
+            cred = credentials.Certificate(settings.GOOGLE_APPLICATION_CREDENTIALS)
+        except Exception:
+            print("[Firestore] No credentials found — using mock mode")
+            return
     else:
         # Development: try credentials file, fall back to emulator
         try:
@@ -64,12 +68,14 @@ class FirestoreService:
     async def save_incident(self, incident: Incident) -> str:
         """Create or update an incident document."""
         data = incident.model_dump()
-        # Convert datetime to Firestore timestamp
         data["created_at"] = incident.created_at
         data["updated_at"] = datetime.utcnow()
         
         if self._available:
-            self._db.collection("incidents").document(incident.incident_id).set(data)
+            import asyncio
+            def _set():
+                self._db.collection("incidents").document(incident.incident_id).set(data)
+            await asyncio.to_thread(_set)
         else:
             self._memory["incidents"][incident.incident_id] = data
         
@@ -77,21 +83,28 @@ class FirestoreService:
     
     async def get_incident(self, incident_id: str) -> dict | None:
         if self._available:
-            doc = self._db.collection("incidents").document(incident_id).get()
-            return doc.to_dict() if doc.exists else None
+            import asyncio
+            def _get():
+                doc = self._db.collection("incidents").document(incident_id).get()
+                return doc.to_dict() if doc.exists else None
+            return await asyncio.to_thread(_get)
         return self._memory["incidents"].get(incident_id)
     
     async def get_active_incidents(self) -> list[dict]:
         """Fetch all non-resolved incidents — called by the mobile feed."""
         if self._available:
-            docs = (
-                self._db.collection("incidents")
-                .where("status", "in", ["detecting", "active", "monitoring"])
-                .stream()
-            )
-            return [d.to_dict() for d in docs]
+            import asyncio
+            def _stream():
+                from google.cloud.firestore import FieldFilter
+                docs = (
+                    self._db.collection("incidents")
+                    .where(filter=FieldFilter("status", "in", ["detecting", "active", "monitoring", "notified", "awaiting_approval"]))
+                    .stream()
+                )
+                return [d.to_dict() for d in docs]
+            return await asyncio.to_thread(_stream)
         
-        active_statuses = {"detecting", "active", "monitoring"}
+        active_statuses = {"detecting", "active", "monitoring", "notified", "awaiting_approval"}
         return [
             v for v in self._memory["incidents"].values()
             if v.get("status") in active_statuses
@@ -99,10 +112,13 @@ class FirestoreService:
     
     async def update_incident_status(self, incident_id: str, status: str):
         if self._available:
-            self._db.collection("incidents").document(incident_id).update({
-                "status": status,
-                "updated_at": datetime.utcnow()
-            })
+            import asyncio
+            def _update():
+                self._db.collection("incidents").document(incident_id).update({
+                    "status": status,
+                    "updated_at": datetime.utcnow()
+                })
+            await asyncio.to_thread(_update)
         elif incident_id in self._memory["incidents"]:
             self._memory["incidents"][incident_id]["status"] = status
     
@@ -113,48 +129,54 @@ class FirestoreService:
         data["timestamp"] = signal.timestamp
         
         if self._available and incident_id:
-            # Subcollection under incident for easy querying
-            (self._db.collection("incidents")
-                     .document(incident_id)
-                     .collection("signals")
-                     .document(signal.signal_id)
-                     .set(data))
+            import asyncio
+            def _set_sig_inc():
+                (self._db.collection("incidents")
+                         .document(incident_id)
+                         .collection("signals")
+                         .document(signal.signal_id)
+                         .set(data))
+            await asyncio.to_thread(_set_sig_inc)
         else:
-            # Top-level collection when no incident assigned yet
             if self._available:
-                self._db.collection("signals").document(signal.signal_id).set(data)
+                import asyncio
+                def _set_sig():
+                    self._db.collection("signals").document(signal.signal_id).set(data)
+                await asyncio.to_thread(_set_sig)
             else:
                 self._memory["signals"][signal.signal_id] = data
     
     # ---- Trace operations ----
     
     async def save_trace(self, trace: AgentTrace):
-        """
-        Traces are append-only — they build the audit log of agent decisions.
-        The Flutter app subscribes to this collection for the Trace Viewer.
-        """
         data = trace.model_dump()
         data["timestamp"] = trace.timestamp
         
         if self._available:
-            (self._db.collection("incidents")
-                     .document(trace.incident_id)
-                     .collection("traces")
-                     .document(trace.trace_id)
-                     .set(data))
+            import asyncio
+            def _set_trace():
+                (self._db.collection("incidents")
+                         .document(trace.incident_id)
+                         .collection("traces")
+                         .document(trace.trace_id)
+                         .set(data))
+            await asyncio.to_thread(_set_trace)
         else:
             self._memory["traces"].append(data)
     
     async def get_traces_for_incident(self, incident_id: str) -> list[dict]:
         if self._available:
-            docs = (
-                self._db.collection("incidents")
-                        .document(incident_id)
-                        .collection("traces")
-                        .order_by("timestamp")
-                        .stream()
-            )
-            return [d.to_dict() for d in docs]
+            import asyncio
+            def _stream_traces():
+                docs = (
+                    self._db.collection("incidents")
+                            .document(incident_id)
+                            .collection("traces")
+                            .order_by("timestamp")
+                            .stream()
+                )
+                return [d.to_dict() for d in docs]
+            return await asyncio.to_thread(_stream_traces)
         
         return [
             t for t in self._memory["traces"]
@@ -166,13 +188,19 @@ class FirestoreService:
     async def get_resource_state(self) -> dict:
         """Single document tracking all resource availability."""
         if self._available:
-            doc = self._db.collection("resources").document("current_state").get()
-            return doc.to_dict() if doc.exists else self._default_resources()
+            import asyncio
+            def _get_res():
+                doc = self._db.collection("resources").document("current_state").get()
+                return doc.to_dict() if doc.exists else self._default_resources()
+            return await asyncio.to_thread(_get_res)
         return self._default_resources()
     
     async def update_resource_state(self, resources: dict):
         if self._available:
-            self._db.collection("resources").document("current_state").set(resources)
+            import asyncio
+            def _set_res():
+                self._db.collection("resources").document("current_state").set(resources)
+            await asyncio.to_thread(_set_res)
     
     def _default_resources(self) -> dict:
         return {

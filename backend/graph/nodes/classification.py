@@ -50,7 +50,7 @@ async def classification_node(state: IncidentState) -> dict:
         - counter_hypothesis: if contradiction exists
         - affected_population: int
         """
-        response = model.generate_content(
+        response = await model.generate_content_async(
             prompt,
             generation_config=genai.types.GenerationConfig(
                 temperature=0.0,
@@ -61,10 +61,19 @@ async def classification_node(state: IncidentState) -> dict:
         output_dict = json.loads(response.text)
         classification = CrisisClassification(**output_dict)
         
+        needs_approval = classification.confidence < 0.70
+        
+        status = "active"
+        if needs_approval:
+            status = "awaiting_approval"
+        elif classification.confidence < 0.6:
+            status = "detecting"
+
         return {
             "classification": classification,
-            "status": "active" if classification.confidence >= 0.6 else "detecting",
-            "agent_traces": [{"agent": "classification_agent", "decision": "CLASSIFIED", "status": "success"}]
+            "status": status,
+            "requires_human_approval": needs_approval,
+            "agent_traces": [{"agent": "classification_agent", "decision": "CLASSIFIED", "status": "success_awaiting_hitl" if needs_approval else "success"}]
         }
     except Exception as e:
         return {

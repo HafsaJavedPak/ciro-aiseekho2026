@@ -16,8 +16,10 @@ class IncidentState(TypedDict):
     messages: Optional[Dict[str, str]]
     
     # Execution Lifecycle
-    status: str                      # e.g. 'detecting', 'active', 'retracted', 'monitoring', 'error'
+    status: str                      # e.g. 'detecting', 'active', 'retracted', 'monitoring', 'error', 'awaiting_approval'
     retraction_message: Optional[str]
+    requires_human_approval: Optional[bool]
+    human_approved: Optional[bool]
     
     # Reducers for appending data safely
     errors: Annotated[List[str], operator.add]

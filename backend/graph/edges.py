@@ -12,6 +12,11 @@ def route_after_classification(state: IncidentState) -> str:
     classification = state.get("classification")
     if not classification:
         return "END"
+    
+    # HITL: Pause if human approval is needed
+    if state.get("status") == "awaiting_approval":
+        return "END"
+        
     if classification.confidence < 0.6:
         # In a real system, this might route to a human-in-the-loop node
         # For our graph, if it's low confidence we just stop, or we could still allocate

@@ -34,7 +34,7 @@ class Incident(BaseModel):
     Updated as new signals arrive and agents re-evaluate.
     """
     incident_id: str = Field(default_factory=lambda: f"inc_{uuid.uuid4().hex[:8]}")
-    status: Literal["detecting", "active", "monitoring", "resolved", "false_alarm"] = "detecting"
+    status: Literal["detecting", "active", "monitoring", "resolved", "false_alarm", "notified", "awaiting_approval"] = "detecting"
     
     location: IncidentLocation
     classification: Optional[CrisisClassification] = None

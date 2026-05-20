@@ -44,7 +44,7 @@ async def messaging_node(state: IncidentState) -> dict:
         - "media_brief": A short factual statement for news outlets.
         """
         
-        response = model.generate_content(
+        response = await model.generate_content_async(
             prompt,
             generation_config=genai.types.GenerationConfig(
                 temperature=0.3,

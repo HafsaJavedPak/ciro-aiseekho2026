@@ -212,7 +212,23 @@ The system then sits idle, waiting for a POST request to hit `/signals/ingest`. 
 
 ---
 
-## 6. Integration Guide for Flutter Developers (`ciro-mobile`)
+## 6. Testing & Hackathon Scenarios
+
+CIRO includes dedicated test scripts designed specifically for high-stress evaluations and hackathon judging criteria.
+
+### `test_stress_concurrency.py`
+* **Purpose:** Proves that the FastAPI + LangGraph architecture can handle massive, sudden spikes in data without crashing.
+* **What it does:** Blasts the API with 150+ concurrent requests simulating a rapidly unfolding disaster to test the `BackgroundTasks` queue and asynchronous graph execution.
+* **How to run:** `python test_stress_concurrency.py`
+
+### `test_hackathon_scenario.py`
+* **Purpose:** A choreographed end-to-end demonstration.
+* **What it does:** Ingests highly specific multi-source signals (social media and IoT sensors) regarding "Urban Flooding in G-10". It verifies that the AI correctly clusters them, classifies the event, and allocates resources.
+* **How to run:** `python test_hackathon_scenario.py`
+
+---
+
+## 7. Integration Guide for Flutter Developers (`ciro-mobile`)
 
 If you are a mobile developer building the **CIRO Mobile App (Flutter)**, this backend provides three primary ways to interface with the AI intelligence and real-time state.
 
@@ -225,6 +241,8 @@ The easiest way to perform CRUD operations or fetch historical data is via the s
   * *Returns:* A JSON list of `AgentTrace` logs. Use this to build a "timeline" UI that shows the user exactly what the AI was thinking at each step.
 * **Submit Field Reports:** `POST /signals/ingest`
   * *Usage:* When a user on the ground submits a photo or text report. Send a JSON body matching the `RawSignal` Pydantic model. This automatically kicks off the LangGraph pipeline.
+* **Approve Pending Incidents (Human-in-the-Loop):** `POST /incidents/{incident_id}/approve`
+  * *Usage:* If the LangGraph classification confidence drops below 70%, the incident status becomes `"awaiting_approval"`. The Flutter app should display these incidents in a special "Review Queue" UI. When a human operator verifies the data, calling this endpoint safely resumes the LangGraph pipeline to allocate resources and dispatch alerts.
 
 ### B. Real-Time Updates (WebSockets)
 For a crisis app, polling HTTP endpoints is too slow. Use the WebSocket interface for sub-second updates.
