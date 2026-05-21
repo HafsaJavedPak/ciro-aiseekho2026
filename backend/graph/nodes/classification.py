@@ -30,7 +30,7 @@ async def classification_node(state: IncidentState) -> dict:
         }
 
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-3.5-flash")
         signals_text = json.dumps([s.model_dump() for s in context.signals], default=str)
         prompt = f"""
         You are the Crisis Classification Agent of CIRO.

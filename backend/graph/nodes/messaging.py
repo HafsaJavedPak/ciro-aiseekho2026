@@ -28,7 +28,7 @@ async def messaging_node(state: IncidentState) -> dict:
 
     try:
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-3.5-flash")
         
         prompt = f"""
         You are the Stakeholder Messaging Agent of CIRO.

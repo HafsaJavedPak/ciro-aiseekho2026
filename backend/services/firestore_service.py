@@ -1,4 +1,5 @@
 # backend/services/firestore_service.py
+import os
 import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime
@@ -13,14 +14,25 @@ def _initialize_firebase():
     Initialize Firebase Admin SDK.
     Checks if already initialized (important — calling this twice crashes).
     """
+    if os.environ.get("MOCK_FIRESTORE") == "true":
+        return
+        
     if firebase_admin._apps:
         return  # Already initialized
     
-    if settings.GOOGLE_APPLICATION_CREDENTIALS:
+    if settings.FIREBASE_CREDENTIALS_JSON:
+        try:
+            import json
+            cred_dict = json.loads(settings.FIREBASE_CREDENTIALS_JSON)
+            cred = credentials.Certificate(cred_dict)
+        except Exception as e:
+            print(f"[Firestore] Failed to parse FIREBASE_CREDENTIALS_JSON string: {e}")
+            return
+    elif settings.GOOGLE_APPLICATION_CREDENTIALS:
         try:
             cred = credentials.Certificate(settings.GOOGLE_APPLICATION_CREDENTIALS)
-        except Exception:
-            print("[Firestore] No credentials found — using mock mode")
+        except Exception as e:
+            print(f"[Firestore] No credentials found or invalid — using mock mode. Error: {e}")
             return
     else:
         # Development: try credentials file, fall back to emulator
@@ -48,20 +60,29 @@ class FirestoreService:
     """
     
     def __init__(self):
+        self._memory: dict = {
+            "incidents": {},
+            "signals": {},
+            "traces": [],
+        }
+        
+        if os.environ.get("MOCK_FIRESTORE") == "true":
+            print("[Firestore] MOCK_FIRESTORE=true detected. Forcing mock in-memory mode.")
+            self._db = None
+            self._available = False
+            return
+
         _initialize_firebase()
         try:
             self._db = firestore.client()
+            # Verify connectivity and quota by reading resources
+            self._db.collection("resources").document("current_state").get()
             self._available = True
+            print("[Firestore] Connected and verified successfully.")
         except Exception as e:
-            print(f"[Firestore] Not available: {e}. Using in-memory fallback.")
+            print(f"[Firestore] Not available or quota exceeded: {e}. Using in-memory fallback.")
             self._db = None
             self._available = False
-            # In-memory store for development without Firebase
-            self._memory: dict = {
-                "incidents": {},
-                "signals": {},
-                "traces": [],
-            }
     
     # ---- Incident operations ----
     

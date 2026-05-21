@@ -54,7 +54,7 @@ async def run_hackathon_scenario():
                 return
 
         print("\n[2] 🧠 Waiting for LangGraph Orchestrator to Process...")
-        for i in range(5, 0, -1):
+        for i in range(20, 0, -1):
             print(f"   ... {i}s")
             await asyncio.sleep(1)
 

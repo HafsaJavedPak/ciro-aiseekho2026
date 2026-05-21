@@ -1,0 +1,84 @@
+Traceback (most recent call last):
+  File "/home/hafsajavedpak/Projects/ciro/backend/venv/lib/python3.13/site-packages/google/api_core/grpc_helpers.py", line 149, in error_remapped_callable
+    return _StreamingResponseIterator(
+        result, prefetch_first_result=prefetch_first
+    )
+  File "/home/hafsajavedpak/Projects/ciro/backend/venv/lib/python3.13/site-packages/google/api_core/grpc_helpers.py", line 71, in __init__
+    self._stored_first_result = next(self._wrapped)
+                                ~~~~^^^^^^^^^^^^^^^
+  File "/home/hafsajavedpak/Projects/ciro/backend/venv/lib/python3.13/site-packages/grpc/_channel.py", line 538, in __next__
+    return self._next()
+           ~~~~~~~~~~^^
+  File "/home/hafsajavedpak/Projects/ciro/backend/venv/lib/python3.13/site-packages/grpc/_channel.py", line 956, in _next
+    raise self
+grpc._channel._MultiThreadedRendezvous: <_MultiThreadedRendezvous of RPC that terminated with:
+	status = StatusCode.RESOURCE_EXHAUSTED
+	details = "Quota exceeded."
+	debug_error_string = "UNKNOWN:Error received from peer ipv6:%5B2a00:1450:4019:818::200a%5D:443 {grpc_status:8, grpc_message:"Quota exceeded."}"
+>
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/hafsajavedpak/Projects/ciro/backend/api/signals.py", line 17, in run_graph_and_save
+    active_incident_dicts = await firestore_service.get_active_incidents()
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hafsajavedpak/Projects/ciro/backend/services/firestore_service.py", line 105, in get_active_incidents
+    return await asyncio.to_thread(_stream)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hafsajavedpak/miniconda3/lib/python3.13/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hafsajavedpak/miniconda3/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/home/hafsajavedpak/Projects/ciro/backend/services/firestore_service.py", line 104, in _stream
+    return [d.to_dict() for d in docs]
+                                 ^^^^
+  File "/home/hafsajavedpak/Projects/ciro/backend/venv/lib/python3.13/site-packages/google/cloud/firestore_v1/stream_generator.py", line 58, in __next__
+    return self._generator.__next__()
+           ~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/hafsajavedpak/Projects/ciro/backend/venv/lib/python3.13/site-packages/google/cloud/firestore_v1/query.py", line 423, in _make_stream
+    response_iterator, expected_prefix = self._get_stream_iterator(
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        transaction,
+        ^^^^^^^^^^^^
+    ...<3 lines>...
+        read_time,
+        ^^^^^^^^^^
+    )
+    ^
+  File "/home/hafsajavedpak/Projects/ciro/backend/venv/lib/python3.13/site-packages/google/cloud/firestore_v1/query.py", line 268, in _get_stream_iterator
+    response_iterator = self._client._firestore_api.run_query(
+        request=request,
+        metadata=self._client._rpc_metadata,
+        **kwargs,
+    )
+  File "/home/hafsajavedpak/Projects/ciro/backend/venv/lib/python3.13/site-packages/google/cloud/firestore_v1/services/firestore/client.py", line 1648, in run_query
+    response = rpc(
+        request,
+    ...<2 lines>...
+        metadata=metadata,
+    )
+  File "/home/hafsajavedpak/Projects/ciro/backend/venv/lib/python3.13/site-packages/google/api_core/gapic_v1/method.py", line 128, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "/home/hafsajavedpak/Projects/ciro/backend/venv/lib/python3.13/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/home/hafsajavedpak/Projects/ciro/backend/venv/lib/python3.13/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/home/hafsajavedpak/Projects/ciro/backend/venv/lib/python3.13/site-packages/google/api_core/retry/retry_base.py", line 216, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/home/hafsajavedpak/Projects/ciro/backend/venv/lib/python3.13/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/home/hafsajavedpak/Projects/ciro/backend/venv/lib/python3.13/site-packages/google/api_core/timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+  File "/home/hafsajavedpak/Projects/ciro/backend/venv/lib/python3.13/site-packages/google/api_core/grpc_helpers.py", line 153, in error_remapped_callable
+    raise exceptions.from_grpc_error(exc) from exc
+google.api_core.exceptions.ResourceExhausted: 429 Quota exceeded.
