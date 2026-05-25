@@ -4,6 +4,32 @@ Welcome to the technical architecture guide for **CIRO (Crisis Intelligence & Re
 
 ---
 
+## Unique Value Proposition (UVP)
+
+CIRO's Unique Value Proposition is its **non-linear, agentic workflow (powered by LangGraph)** combined with a highly responsive, real-time **Flutter UI**. By shifting away from rigid sequential AI chains, CIRO operates as an autonomous, self-healing orchestration engine that adapts to dynamic crisis situations. It automatically filters out conflicting signals, scales infinitely via **Google Cloud Run**, and empowers human dispatchers with fully transparent AI reasoning trails—accelerating emergency response without sacrificing human oversight.
+
+---
+
+## Directory Structure
+
+```text
+ciro/
+├── backend/                  # Python backend (FastAPI, LangGraph agents, Firebase services)
+│   ├── agents/               # Individual LangGraph node functions and logic
+│   ├── api/                  # FastAPI routers and HTTP endpoints
+│   ├── graph/                # LangGraph state definitions, nodes, and conditional edges
+│   ├── models/               # Pydantic schemas (Agent IO, incidents, signals)
+│   └── services/             # External service wrappers (Firestore, WebSocket manager)
+├── ciro-mobile/              # Flutter mobile application
+│   ├── lib/core/             # Theming, routing, and shared utilities
+│   ├── lib/data/             # Data models and API repositories
+│   └── lib/features/         # UI Screens (Traces, Map, Crisis Feed, Alerts)
+├── docs/                     # Additional project documentation
+└── deploy_to_gcp.sh          # Shell script for deploying the backend to Google Cloud Run
+```
+
+---
+
 ## 1. Overall Design & Architectural Philosophy
 
 Traditional AI pipelines often rely on **rigid linear chains** (e.g. LangChain SequentialChains) that call LLMs in a fixed order. In crisis response, linear chains are fragile: if a sensor throws an error or an LLM times out, the entire dispatch system crashes.
@@ -70,7 +96,20 @@ graph TD
 
 ---
 
-## 3. Mock & Real API Integrations
+## 3. GCP Architecture Deployed on Cloud
+
+The CIRO ecosystem is designed for high availability and elastic scalability, deployed natively on Google Cloud Platform (GCP).
+
+- **Frontend Connectivity**: The Flutter mobile app communicates with the backend via REST APIs and WebSockets, secured behind **Cloud Load Balancing**.
+- **Serverless Compute**: The FastAPI application and LangGraph orchestrator are containerized and deployed on **Google Cloud Run**. This allows the backend to scale down to zero during quiet periods and scale out instantly during a massive influx of crisis signals.
+- **Asynchronous Task Management**: Heavy LangGraph execution cycles and agentic processing are offloaded to **Cloud Tasks / Cloud Pub/Sub** or processed via asyncio background workers to ensure the API never blocks.
+- **Real-Time Data Layer**: All incidents, signals, and agent reasoning traces are persisted in **Cloud Firestore**, which seamlessly pushes state updates back to the mobile clients.
+- **External AI & APIs**: The backend connects natively to the **Gemini AI API** for intelligent classification and messaging, as well as **OpenWeatherMap** for environmental telemetry.
+
+![CIRO GCP Architecture](/home/hafsajavedpak/.gemini/antigravity/brain/86680c35-7fbb-4ac6-8ced-1655987485d3/ciro_gcp_architecture_1779685148499.png)
+
+---
+## 4. Mock & Real API Integrations
 
 To ensure high availability in production and friction-free setup for developers, the backend uses a hybrid mock-real service layer:
 
@@ -83,7 +122,7 @@ To ensure high availability in production and friction-free setup for developers
 
 ---
 
-## 4. Detailed Agent Specifications
+## 5. Detailed Agent Specifications
 
 CIRO's agents are stateless, isolated workers designed for deterministic state transitions:
 
@@ -99,7 +138,7 @@ CIRO's agents are stateless, isolated workers designed for deterministic state t
 
 ---
 
-## 5. Frontend-Backend Integration & Real-Time Sync
+## 6. Frontend-Backend Integration & Real-Time Sync
 
 The Flutter mobile dashboard communicates with the backend using three primary layers:
 
@@ -109,7 +148,7 @@ The Flutter mobile dashboard communicates with the backend using three primary l
 
 ---
 
-## 6. The Mobile Client: Flutter UX/UI
+## 7. The Mobile Client: Flutter UX/UI
 
 The frontend is a bespoke **Flutter Mobile Application** designed for rapid cognitive processing under the stress of emergency operations.
 

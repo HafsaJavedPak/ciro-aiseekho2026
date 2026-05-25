@@ -12,3 +12,5 @@ venv/
 backend/firebase-credentials.json
 __pycache__/
 *.pyc
+google-cloud-sdk/
+*.tar.gz
